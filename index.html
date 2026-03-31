@@ -942,8 +942,13 @@ function openScratchOverlay(prize,number,onComplete,queueInfo){
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${W*.2}px serif`;ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillText('#'+number,W/2,H*.35);
     ctx.font=`600 ${W*.08}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.1)';ctx.fillText('刮 刮 樂',W/2,H*.55);
     ctx.font=`bold ${W*.06}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillText('⬆ 刮開此處 ⬆',W/2,H*.72);
-    let scr=0,isDown=false;const tot=W*H;const br=Math.min(W,H)*.08;let revealed=false;
+    let scr=0,isDown=false;const tot=W*H;const br=Math.min(W,H)*.06;let revealed=false;let strokeCount=0;
     const debrisColors=['#c0c0c0','#d8d8d8','#a0a0a0','#e0e0e0','#b0b0b0'];
+    function checkScratchPercent(){
+      const imgData=ctx.getImageData(0,0,W,H).data;let cleared=0;
+      for(let i=3;i<imgData.length;i+=16){if(imgData[i]===0)cleared++} // sample every 4th pixel's alpha
+      return cleared/(imgData.length/16);
+    }
     function spawnDebris(x,y){
       for(let i=0;i<3;i++){
         const d=document.createElement('div');d.className='scratch-debris';
@@ -958,8 +963,8 @@ function openScratchOverlay(prize,number,onComplete,queueInfo){
         requestAnimationFrame(anim);
       }
     }
-    function scrAt(x,y){if(revealed)return;ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x,y,br,0,Math.PI*2);ctx.fill();scr+=Math.PI*br*br;spawnDebris(x,y);
-      if(scr/tot>.5&&!revealed){revealed=true;finishScratchReveal(ctx,W,H,prize,onComplete)}}
+    function scrAt(x,y){if(revealed)return;ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x,y,br,0,Math.PI*2);ctx.fill();spawnDebris(x,y);
+      strokeCount++;if(strokeCount%12===0){const pct=checkScratchPercent();if(pct>.65&&!revealed){revealed=true;finishScratchReveal(ctx,W,H,prize,onComplete)}}}
     function onStart(e){if(revealed)return;e.preventDefault();isDown=true;const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();scrAt(t.clientX-r.left,t.clientY-r.top)}
     function onMove(e){if(!isDown||revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();scrAt(t.clientX-r.left,t.clientY-r.top)}
     function onEnd(){isDown=false}
