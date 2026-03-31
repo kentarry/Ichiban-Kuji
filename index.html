@@ -219,6 +219,15 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 /* Pending draws notification */
 .pending-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:180;background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.05));border:1px solid rgba(255,215,0,.3);border-radius:16px;padding:14px 24px;backdrop-filter:blur(10px);display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:slideUp .5s}
 @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* ═══ SCRATCH OVERLAY ═══ */
+.scratch-overlay{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s}
+.scratch-overlay.show{display:flex}
+.scratch-ov-wrap{position:relative;width:min(320px,85vw);height:min(320px,50vh);border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(59,130,246,.15),0 0 0 2px rgba(59,130,246,.25)}
+.scratch-ov-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;z-index:5}
+.scratch-ov-prize{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:0}
+.scratch-ov-prize .sov-lv{font-size:3rem;font-weight:900;text-shadow:0 4px 20px rgba(0,0,0,.6)}
+.scratch-ov-prize .sov-nm{font-size:1.1rem;font-weight:600;color:rgba(255,255,255,.9);margin-top:8px}
+.scratch-debris{position:absolute;width:6px;height:3px;border-radius:50%;pointer-events:none;z-index:10;opacity:.8}
 </style>
 </head>
 <body>
@@ -404,6 +413,23 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
   </div>
 </div>
 
+<div class="scratch-overlay" id="m-scratch-ov">
+  <div class="tear-ov-hdr">
+    <span class="tear-num" id="sov-num">#01</span>
+    <span>用手指或滑鼠刮開卡片！</span>
+    <div class="tear-progress" id="sov-progress" style="display:none"></div>
+  </div>
+  <div class="scratch-ov-wrap" id="sov-wrap">
+    <div class="scratch-ov-prize" id="sov-prize"></div>
+    <canvas id="sov-canvas"></canvas>
+  </div>
+  <div class="tear-ov-hint" id="sov-hint">👆 用力刮開銀色區域！</div>
+  <div class="tear-ov-actions">
+    <button class="btn btn-gold" onclick="skipScratchReveal()" id="sov-skip-btn">⚡ 直接開獎</button>
+    <button class="btn btn-outline" onclick="skipAllScratchReveals()" id="sov-skip-all" style="display:none">⚡ 全部立即兌獎</button>
+  </div>
+</div>
+
 <script>
 
 const GK='ichiban_gas_url';
@@ -438,7 +464,14 @@ function logout(){S.user=null;updUIAuth();toast('已登出','info');R.go('home')
 function updUIAuth(){if(S.user){$('btn-login').style.display='none';$('btn-logout').style.display='';$('user-info').style.display='';$('user-info').innerHTML='<i class="fas fa-user"></i> '+S.user;$('user-info').onclick=()=>R.go('my')}else{$('btn-login').style.display='';$('btn-logout').style.display='none';$('user-info').style.display='none'}}
 
 // ═══ ACTIVITY LIST ═══
-async function loadActs(mine){showLoading();try{const r=await api('getActivities');if(r.success){S.acts=r.activities||[];renderActs(mine)}else toast(r.error,'error')}catch(e){toast('載入失敗','error')}hideLoading()}
+let _actsCache=null,_actsCacheTime=0;
+async function loadActs(mine){
+  // Use cached data if available and fresh (<30s)
+  if(_actsCache&&Date.now()-_actsCacheTime<30000){S.acts=_actsCache;renderActs(mine);return}
+  if(_actsCache){S.acts=_actsCache;renderActs(mine)} // show stale immediately
+  else showLoading();
+  try{const r=await api('getActivities');if(r.success){S.acts=r.activities||[];_actsCache=S.acts;_actsCacheTime=Date.now();renderActs(mine)}else toast(r.error,'error')}catch(e){if(!_actsCache)toast('載入失敗','error')}hideLoading()
+}
 function renderActs(mine){const acts=mine?S.acts.filter(a=>a.creator===S.user):S.acts;const el=mine?$('my-act-list'):$('act-list');
 if(!acts.length){el.innerHTML=mine?'<div style="text-align:center;padding:36px;color:var(--txt3)"><i class="fas fa-box-open" style="font-size:2rem;display:block;margin-bottom:10px"></i>尚無活動</div>':'';if(!mine)$('empty-st').style.display=acts.length?'none':'block';return}
 if(!mine)$('empty-st').style.display='none';
@@ -666,52 +699,55 @@ function markRevealed(idx){
   try{const d=JSON.parse(localStorage.getItem(PENDING_KEY));if(d&&d.results[idx]){d.results[idx].revealed=true;localStorage.setItem(PENDING_KEY,JSON.stringify(d))}}catch(e){}
 }
 
+let _tearAC=null; // AbortController for tear overlay events
 function openTearOverlay(prize, number, onComplete, queueInfo){
+  if(_tearAC){_tearAC.abort();_tearAC=null}
+  _tearAC=new AbortController();const sig={signal:_tearAC.signal};
   const ov=$('m-tear-ov');ov.classList.add('show');
   $('tov-num').textContent='#'+String(number).padStart(2,'0');
   $('tov-hint').textContent='👆 從任意方向滑動撕開！必須完全撕開才能開獎';
   $('tov-hint').style.display='';
-  // Prize layer
+  // Prize layer (hidden behind canvas)
   const c=pColor(prize.level);
   $('tov-prize').innerHTML=`<div class="tov-lv" style="color:${c}">${prize.level}</div><div class="tov-nm">${prize.name}</div>${prize.imageUrl?`<img src="${prize.imageUrl}" class="tov-img" onerror="this.style.display='none'">`:''}`;
   // Queue progress
   if(queueInfo){$('tov-progress').style.display='';$('tov-progress').textContent=`第 ${queueInfo.current} / ${queueInfo.total} 張`;$('tov-skip-all').style.display=''}
   else{$('tov-progress').style.display='none';$('tov-skip-all').style.display='none'}
   $('tov-skip-btn').style.display='';
-  // Canvas setup
-  const canvas=$('tov-canvas');const wrap=canvas.parentElement;
-  const W=wrap.clientWidth,H=wrap.clientHeight;canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
-  // Gold paper
-  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#A0855C');g.addColorStop(.25,'#D4AF61');g.addColorStop(.5,'#B8942F');g.addColorStop(.75,'#D4B96A');g.addColorStop(1,'#A07D4A');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  ctx.globalAlpha=0.06;for(let i=0;i<80;i++){ctx.strokeStyle=Math.random()>.5?'#000':'#fff';ctx.lineWidth=Math.random()*1.5;ctx.beginPath();const sx=Math.random()*W,sy=Math.random()*H;ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.random()*20-10,sy+Math.random()*20-10);ctx.stroke()}ctx.globalAlpha=1;
-  ctx.strokeStyle='rgba(0,0,0,.03)';ctx.lineWidth=.5;for(let i=-H;i<W;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}
-  for(let i=0;i<W+H;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i-H,H);ctx.stroke()}
-  const numStr=String(number).padStart(2,'0');
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${W*.22}px serif`;
-  ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillText(numStr,W/2+1,H*.28+1);ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillText(numStr,W/2,H*.28);
-  ctx.font=`600 ${W*.08}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillText('一 番 賞',W/2,H*.42);
-  ctx.setLineDash([3,5]);ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(W*.08,H*.52);ctx.lineTo(W*.92,H*.52);ctx.stroke();ctx.setLineDash([]);
-  ctx.font=`${W*.06}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillText('✂ - - - - - - - ✂',W/2,H*.52);
-  ctx.font=`bold ${W*.07}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.22)';ctx.fillText('⬇ 由此撕開 ⬇',W/2,H*.68);
-  const shine=ctx.createLinearGradient(0,0,W,0);shine.addColorStop(0,'rgba(255,255,255,0)');shine.addColorStop(.45,'rgba(255,255,255,0)');shine.addColorStop(.5,'rgba(255,255,255,.08)');shine.addColorStop(.55,'rgba(255,255,255,0)');shine.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=shine;ctx.fillRect(0,0,W,H);
-  const origData=ctx.getImageData(0,0,W,H);
-  const jags=Array.from({length:60},()=>(Math.random()-.5)*10);
-  let tearProg=0,tearDir=null,dragging=false,sx=0,sy=0,revealed=false;
-  // Store completion callback
-  canvas._onComplete=onComplete;canvas._prize=prize;canvas._revealed=false;
-  function onStart(e){if(revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();sx=t.clientX-r.left;sy=t.clientY-r.top;dragging=true;tearDir=null;tearProg=0}
-  function onMove(e){if(!dragging||revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();const ex=t.clientX-r.left,ey=t.clientY-r.top;const dx=ex-sx,dy=ey-sy;
-  if(!tearDir){const ad=Math.abs(dx),ay=Math.abs(dy);if(ad>15||ay>15)tearDir=ad>ay?(dx>0?'right':'left'):(dy>0?'down':'up')}
-  if(!tearDir)return;
-  const dist=tearDir==='right'||tearDir==='left'?Math.abs(dx):Math.abs(dy);const max=tearDir==='right'||tearDir==='left'?W:H;
-  tearProg=Math.min(1,dist/(max*.55));drawTear(ctx,W,H,origData,tearProg,tearDir,jags);
-  if(tearProg>=.95){dragging=false;revealed=true;canvas._revealed=true;finishOverlayTear(ctx,W,H,origData,tearProg,tearDir,jags,prize,onComplete)}}
-  function onEnd(){dragging=false;if(!revealed&&tearProg>0&&tearProg<.95){tearProg=0;tearDir=null;ctx.putImageData(origData,0,0)}}
-  // Remove old listeners
-  const newCanvas=canvas.cloneNode(true);canvas.parentNode.replaceChild(newCanvas,canvas);
-  newCanvas.addEventListener('mousedown',onStart);newCanvas.addEventListener('mousemove',onMove);newCanvas.addEventListener('mouseup',onEnd);newCanvas.addEventListener('mouseleave',onEnd);
-  newCanvas.addEventListener('touchstart',onStart,{passive:false});newCanvas.addEventListener('touchmove',onMove,{passive:false});newCanvas.addEventListener('touchend',onEnd);
-  newCanvas._onComplete=onComplete;newCanvas._prize=prize;newCanvas._revealed=false;
+  // Use rAF to ensure overlay is rendered and sized before drawing canvas
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+    const canvas=$('tov-canvas');const wrap=canvas.parentElement;
+    const W=wrap.clientWidth||320,H=wrap.clientHeight||440;
+    canvas.width=W;canvas.height=H;canvas.style.position='relative';canvas.style.zIndex='5';
+    const ctx=canvas.getContext('2d');
+    // Gold paper texture
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#A0855C');g.addColorStop(.25,'#D4AF61');g.addColorStop(.5,'#B8942F');g.addColorStop(.75,'#D4B96A');g.addColorStop(1,'#A07D4A');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=0.06;for(let i=0;i<80;i++){ctx.strokeStyle=Math.random()>.5?'#000':'#fff';ctx.lineWidth=Math.random()*1.5;ctx.beginPath();const sx=Math.random()*W,sy=Math.random()*H;ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.random()*20-10,sy+Math.random()*20-10);ctx.stroke()}ctx.globalAlpha=1;
+    ctx.strokeStyle='rgba(0,0,0,.03)';ctx.lineWidth=.5;for(let i=-H;i<W;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}
+    for(let i=0;i<W+H;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i-H,H);ctx.stroke()}
+    const numStr=String(number).padStart(2,'0');
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${W*.22}px serif`;
+    ctx.fillStyle='rgba(255,255,255,.15)';ctx.fillText(numStr,W/2+1,H*.28+1);ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillText(numStr,W/2,H*.28);
+    ctx.font=`600 ${W*.09}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillText('一 番 賞',W/2,H*.42);
+    ctx.setLineDash([3,5]);ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(W*.08,H*.52);ctx.lineTo(W*.92,H*.52);ctx.stroke();ctx.setLineDash([]);
+    ctx.font=`${W*.06}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillText('✂ - - - - - - - ✂',W/2,H*.52);
+    ctx.font=`bold ${W*.07}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillText('⬇ 由此撕開 ⬇',W/2,H*.68);
+    const shine=ctx.createLinearGradient(0,0,W,0);shine.addColorStop(0,'rgba(255,255,255,0)');shine.addColorStop(.45,'rgba(255,255,255,0)');shine.addColorStop(.5,'rgba(255,255,255,.1)');shine.addColorStop(.55,'rgba(255,255,255,0)');shine.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=shine;ctx.fillRect(0,0,W,H);
+    const origData=ctx.getImageData(0,0,W,H);
+    const jags=Array.from({length:60},()=>(Math.random()-.5)*10);
+    let tearProg=0,tearDir=null,dragging=false,sx=0,sy=0,revealed=false;
+    canvas._onComplete=onComplete;canvas._prize=prize;canvas._revealed=false;
+    function onStart(e){if(revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();sx=t.clientX-r.left;sy=t.clientY-r.top;dragging=true;tearDir=null;tearProg=0}
+    function onMove(e){if(!dragging||revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();const ex=t.clientX-r.left,ey=t.clientY-r.top;const dx=ex-sx,dy=ey-sy;
+    if(!tearDir){const ad=Math.abs(dx),ay=Math.abs(dy);if(ad>15||ay>15)tearDir=ad>ay?(dx>0?'right':'left'):(dy>0?'down':'up')}
+    if(!tearDir)return;
+    const dist=tearDir==='right'||tearDir==='left'?Math.abs(dx):Math.abs(dy);const max=tearDir==='right'||tearDir==='left'?W:H;
+    tearProg=Math.min(1,dist/(max*.55));drawTear(ctx,W,H,origData,tearProg,tearDir,jags);
+    if(tearProg>=.95){dragging=false;revealed=true;canvas._revealed=true;finishOverlayTear(ctx,W,H,origData,tearProg,tearDir,jags,prize,onComplete)}}
+    function onEnd(){dragging=false;if(!revealed&&tearProg>0&&tearProg<.95){tearProg=0;tearDir=null;ctx.putImageData(origData,0,0)}}
+    canvas.addEventListener('mousedown',onStart,sig);canvas.addEventListener('mousemove',onMove,sig);canvas.addEventListener('mouseup',onEnd,sig);canvas.addEventListener('mouseleave',onEnd,sig);
+    canvas.addEventListener('touchstart',onStart,{passive:false,...sig});canvas.addEventListener('touchmove',onMove,{passive:false,...sig});canvas.addEventListener('touchend',onEnd,sig);
+  })});
 }
 
 function finishOverlayTear(ctx,W,H,origData,prog,dir,jags,prize,onComplete){
@@ -839,42 +875,144 @@ function updScDrawBar(){$('sc-sel-ct').textContent=`已選 ${S.selected.length}/
 
 function clearScratchSelection(){S.selected=[];document.querySelectorAll('.scratch-card').forEach(t=>t.classList.remove('selected'));updScDrawBar()}
 
-function initScratchCanvas(card){const canvas=card.querySelector('canvas');const rect=card.getBoundingClientRect();canvas.width=rect.width||80;canvas.height=rect.height||80;const ctx=canvas.getContext('2d');
-const g=ctx.createLinearGradient(0,0,canvas.width,canvas.height);g.addColorStop(0,'#b0b0b0');g.addColorStop(.3,'#d8d8d8');g.addColorStop(.5,'#a0a0a0');g.addColorStop(1,'#b0b0b0');ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
-ctx.fillStyle='rgba(0,0,0,.25)';ctx.font=`bold ${Math.min(canvas.width,canvas.height)*0.35}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(card.dataset.num,canvas.width/2,canvas.height/2);
-ctx.strokeStyle='rgba(255,255,255,.08)';for(let i=-canvas.height;i<canvas.width;i+=8){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+canvas.height,canvas.height);ctx.stroke()}
-let isDown=false,scr=0;const tot=canvas.width*canvas.height;const br=Math.min(canvas.width,canvas.height)*.15;
-function scrAt(x,y){ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x,y,br,0,Math.PI*2);ctx.fill();scr+=Math.PI*br*br;if(scr/tot>.45)revealCard(card)}
-function evGuard(e){
-  if(S.drawMode==='multi'){
-    e.preventDefault();
-    const n = card.dataset.num; const si=S.selected.indexOf(String(n));
-    if(si>=0){S.selected.splice(si,1);card.classList.remove('selected')}
-    else{if(S.selected.length>=S.multiN){toast(`最多選${S.multiN}張`,'info');return}S.selected.push(String(n));card.classList.add('selected')}
-    updScDrawBar();return true;
-  }
-  return false;
+function initScratchCanvas(card){
+  // Simple click handler for scratch cards - no inline scratching
+  card.addEventListener('click',()=>{
+    if(card.classList.contains('revealed'))return;
+    const n=card.dataset.num, sh=card.dataset.sheet;
+    if(S.drawMode==='multi'){
+      const si=S.selected.indexOf(String(n));
+      if(si>=0){S.selected.splice(si,1);card.classList.remove('selected')}
+      else{if(S.selected.length>=S.multiN){toast(`最多選${S.multiN}張`,'info');return}S.selected.push(String(n));card.classList.add('selected')}
+      updScDrawBar();
+    } else {
+      // Single mode: confirm then buy
+      if(!S.user){toast('請先登入','error');return}
+      $('draw-cf-content').innerHTML=`<p style="font-size:1.1rem">確定要刮開 <b style="color:var(--gold)">#${n}</b> 嗎？</p><p style="font-size:.8rem;margin-top:6px;color:var(--txt3)">確認後進入全螢幕刮獎體驗</p>`;
+      $('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doSingleScratch(n,sh)};showModal('m-draw-cf');
+    }
+  });
+  // Render a silver cover appearance
+  const canvas=card.querySelector('canvas');if(!canvas)return;
+  const rect=card.getBoundingClientRect();canvas.width=rect.width||80;canvas.height=rect.height||80;const ctx=canvas.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,canvas.width,canvas.height);g.addColorStop(0,'#b0b0b0');g.addColorStop(.3,'#d8d8d8');g.addColorStop(.5,'#a0a0a0');g.addColorStop(1,'#b0b0b0');ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.font=`bold ${Math.min(canvas.width,canvas.height)*0.35}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(card.dataset.num,canvas.width/2,canvas.height/2);
+  ctx.strokeStyle='rgba(255,255,255,.08)';for(let i=-canvas.height;i<canvas.width;i+=8){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+canvas.height,canvas.height);ctx.stroke()}
 }
-canvas.addEventListener('mousedown',e=>{if(evGuard(e))return;isDown=true;const r=canvas.getBoundingClientRect();scrAt(e.clientX-r.left,e.clientY-r.top)});
-canvas.addEventListener('mousemove',e=>{if(!isDown)return;const r=canvas.getBoundingClientRect();scrAt(e.clientX-r.left,e.clientY-r.top)});
-canvas.addEventListener('mouseup',()=>isDown=false);canvas.addEventListener('mouseleave',()=>isDown=false);
-canvas.addEventListener('touchstart',e=>{if(evGuard(e))return;e.preventDefault();const r=canvas.getBoundingClientRect();scrAt(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top)},{passive:false});
-canvas.addEventListener('touchmove',e=>{if(S.drawMode==='multi')return;e.preventDefault();const r=canvas.getBoundingClientRect();scrAt(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top)},{passive:false})}
 
-async function revealCard(card){if(card.classList.contains('revealed'))return;if(!S.user){toast('請先登入','error');return}const player=S.user;card.classList.add('revealed');
-showLoading();try{const r=await api('scratchNumber',{sheetName:card.dataset.sheet,numberList:JSON.stringify([parseInt(card.dataset.num)]),playerName:player});hideLoading();if(r.success){showResult(r.results[0].prize,player);loadGame(card.dataset.sheet,'scratch')}else{card.classList.remove('revealed');toast(r.results[0].error||'失敗','error')}}catch(e){hideLoading();card.classList.remove('revealed');toast('連線失敗','error')}}
+// ═══ SCRATCH OVERLAY ═══
+let _scratchAC=null, _scratchQueue=[], _scratchQIdx=0;
+
+async function doSingleScratch(num,sh){
+  if(!S.user){toast('請先登入','error');return}
+  showLoading();try{
+    const r=await api('scratchNumber',{sheetName:sh,numberList:JSON.stringify([parseInt(num)]),playerName:S.user});hideLoading();
+    if(r.success||r.results){
+      const res=(r.results||[])[0];
+      if(res&&res.success){openScratchOverlay(res.prize,num,()=>{loadGame(sh,'scratch')})}
+      else{toast(res?.error||'失敗','error');loadGame(sh,'scratch')}
+    }else{toast(r.error||'失敗','error')}
+  }catch(e){hideLoading();toast('連線失敗','error')}
+}
+
+function openScratchOverlay(prize,number,onComplete,queueInfo){
+  if(_scratchAC){_scratchAC.abort();_scratchAC=null}
+  _scratchAC=new AbortController();const sig={signal:_scratchAC.signal};
+  const ov=$('m-scratch-ov');ov.classList.add('show');
+  $('sov-num').textContent='#'+String(number);
+  $('sov-hint').textContent='👆 用力刮開銀色區域！';$('sov-hint').style.display='';
+  $('sov-skip-btn').style.display='';
+  const c=pColor(prize.level);
+  $('sov-prize').innerHTML=`<div class="sov-lv" style="color:${c}">${prize.level}</div><div class="sov-nm">${prize.name}</div>${prize.imageUrl?`<img src="${prize.imageUrl}" class="tov-img" onerror="this.style.display='none'">`:''}`;
+  if(queueInfo){$('sov-progress').style.display='';$('sov-progress').textContent=`第 ${queueInfo.current} / ${queueInfo.total} 張`;$('sov-skip-all').style.display=''}
+  else{$('sov-progress').style.display='none';$('sov-skip-all').style.display='none'}
+  // Store refs
+  const canvas=$('sov-canvas');canvas._prize=prize;canvas._onComplete=onComplete;
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+    const wrap=$('sov-wrap');const W=wrap.clientWidth||320,H=wrap.clientHeight||320;
+    canvas.width=W;canvas.height=H;canvas.style.position='absolute';canvas.style.zIndex='5';
+    const ctx=canvas.getContext('2d');
+    // Silver card
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#b8b8b8');g.addColorStop(.2,'#e0e0e0');g.addColorStop(.4,'#a0a0a0');g.addColorStop(.6,'#d0d0d0');g.addColorStop(.8,'#b0b0b0');g.addColorStop(1,'#c0c0c0');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // Texture
+    ctx.globalAlpha=0.04;for(let i=0;i<60;i++){ctx.strokeStyle=Math.random()>.5?'#000':'#fff';ctx.lineWidth=Math.random()*2;ctx.beginPath();ctx.moveTo(Math.random()*W,Math.random()*H);ctx.lineTo(Math.random()*W,Math.random()*H);ctx.stroke()}ctx.globalAlpha=1;
+    // Cross hatch
+    ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=.5;for(let i=-H;i<W;i+=8){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}
+    // Number
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${W*.2}px serif`;ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillText('#'+number,W/2,H*.35);
+    ctx.font=`600 ${W*.08}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.1)';ctx.fillText('刮 刮 樂',W/2,H*.55);
+    ctx.font=`bold ${W*.06}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillText('⬆ 刮開此處 ⬆',W/2,H*.72);
+    let scr=0,isDown=false;const tot=W*H;const br=Math.min(W,H)*.08;let revealed=false;
+    const debrisColors=['#c0c0c0','#d8d8d8','#a0a0a0','#e0e0e0','#b0b0b0'];
+    function spawnDebris(x,y){
+      for(let i=0;i<3;i++){
+        const d=document.createElement('div');d.className='scratch-debris';
+        d.style.left=(x+Math.random()*20-10)+'px';d.style.top=(y+Math.random()*20-10)+'px';
+        d.style.background=debrisColors[Math.floor(Math.random()*debrisColors.length)];
+        d.style.width=(3+Math.random()*5)+'px';d.style.height=(2+Math.random()*3)+'px';
+        d.style.transform=`rotate(${Math.random()*360}deg)`;
+        wrap.appendChild(d);
+        const vx=(Math.random()-.5)*4,vy=Math.random()*3+1;let px=parseFloat(d.style.left),py=parseFloat(d.style.top),op=.8;
+        function anim(){px+=vx;py+=vy;op-=0.02;d.style.left=px+'px';d.style.top=py+'px';d.style.opacity=op;
+          if(op>0)requestAnimationFrame(anim);else d.remove()}
+        requestAnimationFrame(anim);
+      }
+    }
+    function scrAt(x,y){if(revealed)return;ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x,y,br,0,Math.PI*2);ctx.fill();scr+=Math.PI*br*br;spawnDebris(x,y);
+      if(scr/tot>.5&&!revealed){revealed=true;finishScratchReveal(ctx,W,H,prize,onComplete)}}
+    function onStart(e){if(revealed)return;e.preventDefault();isDown=true;const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();scrAt(t.clientX-r.left,t.clientY-r.top)}
+    function onMove(e){if(!isDown||revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();scrAt(t.clientX-r.left,t.clientY-r.top)}
+    function onEnd(){isDown=false}
+    canvas.addEventListener('mousedown',onStart,sig);canvas.addEventListener('mousemove',onMove,sig);canvas.addEventListener('mouseup',onEnd,sig);canvas.addEventListener('mouseleave',onEnd,sig);
+    canvas.addEventListener('touchstart',onStart,{passive:false,...sig});canvas.addEventListener('touchmove',onMove,{passive:false,...sig});canvas.addEventListener('touchend',onEnd,sig);
+  })});
+}
+
+function finishScratchReveal(ctx,W,H,prize,onComplete){
+  $('sov-hint').textContent='🎊 開獎中...';
+  // Fade out remaining silver
+  let alpha=1;function fadeStep(){alpha-=0.05;if(alpha<=0){ctx.clearRect(0,0,W,H);$('sov-hint').style.display='none';$('sov-skip-btn').style.display='none';
+    const big=['A賞','B賞'].includes(prize.level);if(big)startConfetti();
+    setTimeout(()=>{stopConfetti();$('m-scratch-ov').classList.remove('show');showResult(prize,S.user);if(onComplete)onComplete()},1500);return}
+  ctx.globalCompositeOperation='destination-out';ctx.fillStyle=`rgba(0,0,0,0.1)`;ctx.fillRect(0,0,W,H);requestAnimationFrame(fadeStep)}
+  requestAnimationFrame(fadeStep);
+}
+
+function skipScratchReveal(){
+  $('m-scratch-ov').classList.remove('show');
+  const canvas=$('sov-canvas');
+  if(canvas._prize)showResult(canvas._prize,S.user);
+  if(canvas._onComplete)setTimeout(canvas._onComplete,300);
+}
+function skipAllScratchReveals(){
+  $('m-scratch-ov').classList.remove('show');
+  const remaining=_scratchQueue.slice(_scratchQIdx).filter(r=>r.success);
+  if(remaining.length)showMultiResult(remaining.map(r=>r.prize),S.user);
+  _scratchQueue=[];_scratchQIdx=0;
+  if(S.curAct)loadGame(S.curAct.sheetName,'scratch');
+}
+
+async function revealCard(card){/* legacy - now handled by overlay */}
 
 function confirmScratch(){if(!S.user){toast('請先登入','error');return}const player=S.user;
 const sh=S.curAct.sheetName; const nums=S.selected.join(', ');
-$('draw-cf-content').innerHTML=`<p>確定購買 <b style="color:var(--gold)">${nums}</b> 號？</p><p style="font-size:.85rem;color:var(--txt2);margin-top:6px">共 ${S.selected.length} 張，確認後系統直接開獎</p>`;
+$('draw-cf-content').innerHTML=`<p>確定購買 <b style="color:var(--gold)">${nums}</b> 號？</p><p style="font-size:.85rem;color:var(--txt2);margin-top:6px">共 ${S.selected.length} 張，逐張刮開</p>`;
 $('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doMultiScratchBuy(S.selected,sh,player)};showModal('m-draw-cf')}
 
 async function doMultiScratchBuy(nums,sh,player){showLoading();try{
 const r=await api('scratchNumber',{sheetName:sh,numberList:JSON.stringify(nums),playerName:player});hideLoading();
-if(r.results){const ok=r.results.filter(x=>x.success);const fail=r.results.filter(x=>!x.success);
+if(r.results){const fail=r.results.filter(x=>!x.success);
 if(fail.length)fail.forEach(f=>toast(f.error,'error'));
-if(ok.length){showMultiResult(ok.map(x=>x.prize),player)}
-loadGame(sh,'scratch')}else{toast(r.error||'失敗','error')}}catch(e){hideLoading();toast('連線失敗','error')}}
+const ok=r.results.filter(x=>x.success);
+if(ok.length){_scratchQueue=r.results;_scratchQIdx=0;nextScratchInQueue(sh)}
+else loadGame(sh,'scratch')}else{toast(r.error||'失敗','error')}}catch(e){hideLoading();toast('連線失敗','error')}}
+
+function nextScratchInQueue(sh){
+  if(_scratchQIdx>=_scratchQueue.length){_scratchQueue=[];_scratchQIdx=0;loadGame(sh||S.curAct.sheetName,'scratch');return}
+  const r=_scratchQueue[_scratchQIdx];
+  if(!r.success){_scratchQIdx++;nextScratchInQueue(sh);return}
+  openScratchOverlay(r.prize, r.prize.number||(_scratchQIdx+1), ()=>{_scratchQIdx++;nextScratchInQueue(sh)}, {current:_scratchQIdx+1, total:_scratchQueue.length});
+}
 
 // ═══ RESULT ═══
 function showResult(prize,player){const big=['A賞','B賞'].includes(prize.level);const c=pColor(prize.level);
