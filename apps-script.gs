@@ -25,8 +25,8 @@ function handleRequest(e, method) {
       case 'verifyActivity':    result = verifyActivity(params.sheetName, params.password); break;
       case 'createActivity':    result = createActivity(typeof params.data === 'string' ? JSON.parse(params.data) : params.data); break;
       case 'getActivityDetail': result = getActivityDetail(params.sheetName); break;
-      case 'drawPrize':         result = drawPrize(params.sheetName, params.playerName, params.ticketIndices); break;
-      case 'scratchNumber':     result = scratchNumber(params.sheetName, parseInt(params.number), params.playerName); break;
+      case 'drawPrize':         result = drawPrize(params.sheetName, params.playerName, params.ticketNumbers || params.ticketIndices); break;
+      case 'scratchNumber':     result = scratchNumber(params.sheetName, params.numberList || params.number, params.playerName); break;
       case 'getDrawLog':        result = getDrawLog(params.sheetName); break;
       case 'resetActivity':     result = resetActivity(params.sheetName); break;
       case 'deleteActivity':    result = deleteActivity(params.sheetName); break;

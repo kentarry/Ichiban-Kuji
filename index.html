@@ -370,7 +370,7 @@ const R={go(p,d){location.hash='#/'+p+(d?'/'+encodeURIComponent(d):'')},init(){a
 handle(){const h=location.hash.slice(2)||'';const[pg,...rest]=h.split('/');const pm=rest.length?decodeURIComponent(rest.join('/')):'';
 document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
 if(!gasUrl()){$('v-setup').classList.add('active');return}
-switch(pg){case'detail':$('v-detail').classList.add('active');loadDetail(pm);break;case'my':if(!S.user){showModal('m-auth');R.go('home');return}$('v-my').classList.add('active');loadActs(true);break;case'create':if(!S.user){R.go('home');return}$('v-create').classList.add('active');initWiz();break;case'kuji':if(!S.user){toast('請先登入再抽獎','error');showModal('m-auth');R.go('home');return}$('v-kuji').classList.add('active');loadGame(pm,'kuji');break;case'scratch':if(!S.user){toast('請先登入再抽獎','error');showModal('m-auth');R.go('home');return}$('v-scratch').classList.add('active');loadGame(pm,'scratch');break;default:$('v-home').classList.add('active');loadActs(false)}}};
+switch(pg){case'detail':$('v-detail').classList.add('active');loadDetail(pm);break;case'my':if(!S.user){showModal('m-auth');R.go('home');return}$('v-my').classList.add('active');loadActs(true);break;case'create':if(!S.user){R.go('home');return}$('v-create').classList.add('active');initWiz();break;case'kuji':if(!S.user){S.pendingGame={type:'kuji',sheet:pm};toast('請先登入再抽獎','error');showModal('m-auth');R.go('home');return}$('v-kuji').classList.add('active');loadGame(pm,'kuji');break;case'scratch':if(!S.user){S.pendingGame={type:'scratch',sheet:pm};toast('請先登入再抽獎','error');showModal('m-auth');R.go('home');return}$('v-scratch').classList.add('active');loadGame(pm,'scratch');break;case'home':default:$('v-home').classList.add('active');loadActs(false)}}};
 
 function saveGas(){const u=$('gas-url').value.trim();if(!u){toast('請輸入網址','error');return}localStorage.setItem(GK,u);toast('設定完成！','success');api('init').then(()=>R.go('home')).catch(e=>toast('連線失敗','error'))}
 
@@ -708,7 +708,7 @@ function startConfetti(){const cv=$('confetti');cv.width=innerWidth;cv.height=in
 function d(){ctx.clearRect(0,0,cv.width,cv.height);cP.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.rv;if(p.y>cv.height+20){p.y=-20;p.x=Math.random()*cv.width}ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore()});cA=requestAnimationFrame(d)}d()}
 function stopConfetti(){if(cA)cancelAnimationFrame(cA);cA=null;const cv=$('confetti');if(cv)cv.getContext('2d').clearRect(0,0,innerWidth,innerHeight)}
 
-document.addEventListener('DOMContentLoaded',()=>{R.init()});
+document.addEventListener('DOMContentLoaded',()=>{ if(!location.hash) location.hash='#/home'; R.init() });
 
 
 </script>
