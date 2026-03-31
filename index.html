@@ -95,11 +95,13 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 .game-layout{display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start}
 .game-hdr{margin-bottom:16px}
 .game-hdr h2{font-size:1.4rem}
-.price-display{display:flex;gap:12px;margin:10px 0;flex-wrap:wrap}
-.price-display .pd{padding:8px 16px;border-radius:var(--r);font-weight:600;cursor:pointer;border:2px solid transparent;transition:all .2s;font-size:.9rem}
-.price-display .pd.single{background:rgba(255,215,0,.08);color:var(--gold);border-color:rgba(255,215,0,.2)}
-.price-display .pd.multi{background:rgba(59,130,246,.08);color:#60a5fa;border-color:rgba(59,130,246,.2)}
-.price-display .pd.sel{box-shadow:0 0 0 2px var(--gold);border-color:var(--gold)}
+.draw-mode-selector{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap;align-items:center}
+.draw-mode-selector .dms-label{color:var(--txt2);font-size:.85rem;font-weight:500}
+.draw-mode-selector .dms-btn{padding:10px 22px;border-radius:var(--r);font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,.12);transition:all .25s;font-size:.95rem;background:rgba(255,255,255,.04);color:var(--txt2);font-family:var(--font);position:relative;overflow:hidden}
+.draw-mode-selector .dms-btn:hover{background:rgba(255,215,0,.06);border-color:rgba(255,215,0,.25)}
+.draw-mode-selector .dms-btn.sel{background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.06));color:var(--gold);border-color:var(--gold);box-shadow:0 0 18px rgba(255,215,0,.18)}
+.draw-mode-selector .dms-btn .dms-price{display:block;font-size:.72rem;color:var(--txt3);margin-top:2px;font-weight:400}
+.draw-mode-selector .dms-btn.sel .dms-price{color:rgba(255,215,0,.6)}
 .big-banner{padding:8px 16px;border-radius:var(--r);text-align:center;font-weight:700;margin-top:10px;font-size:.9rem}
 .big-banner.has{background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(255,215,0,.04));border:1px solid rgba(255,215,0,.25);color:var(--gold)}
 .big-banner.gone{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);color:var(--danger)}
@@ -114,10 +116,14 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 .ticket-prize .tp-lv{font-size:1.5rem;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5)}
 .ticket-prize .tp-nm{font-size:.65rem;color:rgba(255,255,255,.8);margin-top:4px}
 .ticket-prize .tp-who{font-size:.55rem;color:rgba(255,255,255,.5);margin-top:6px}
-.ticket-cover{position:absolute;inset:0;border-radius:12px;overflow:hidden;transition:clip-path .1s linear}
+.ticket-cover{position:absolute;inset:0;border-radius:12px;overflow:hidden;cursor:grab;transition:opacity .5s}
+.ticket-cover:active{cursor:grabbing}
 .ticket-cover canvas{width:100%;height:100%;display:block}
-.ticket .instant-btn{position:absolute;bottom:6px;right:6px;z-index:5;background:rgba(0,0,0,.6);color:var(--gold);border:1px solid rgba(255,215,0,.3);border-radius:6px;padding:3px 8px;font-size:.6rem;cursor:pointer;font-family:var(--font);display:none}
-.ticket.tearing .instant-btn{display:block}
+.ticket-cover .tear-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:.6rem;pointer-events:none;animation:hintPulse 2s ease-in-out infinite;white-space:nowrap}
+@keyframes hintPulse{0%,100%{opacity:.4;transform:translateX(-50%) translateY(0)}50%{opacity:.8;transform:translateX(-50%) translateY(-3px)}}
+.ticket.tearing .ticket-cover .tear-hint{display:none}
+.ticket .instant-btn{position:absolute;bottom:6px;right:6px;z-index:5;background:rgba(0,0,0,.7);color:var(--gold);border:1px solid rgba(255,215,0,.4);border-radius:8px;padding:4px 10px;font-size:.65rem;cursor:pointer;font-family:var(--font);display:none;backdrop-filter:blur(4px)}
+.ticket.tearing .instant-btn{display:block;animation:fadeIn .3s}
 /* Prize Panel */
 .prize-panel{position:sticky;top:80px}
 .prize-panel h3{font-size:.95rem;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:6px}
@@ -133,6 +139,18 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 .result-modal .rl{font-size:3rem;font-weight:900;margin-bottom:6px;text-shadow:0 0 40px currentColor}
 .result-modal .rn{font-size:1.3rem;font-weight:600;margin-bottom:4px}
 .result-modal .rd{color:var(--txt2);margin-bottom:6px}.result-modal .rp{color:var(--txt3);font-size:.82rem;margin-bottom:20px}
+.prize-res-img { width:100%; max-width:260px; height:200px; object-fit:cover; border-radius:12px; margin:14px auto; display:block; box-shadow:0 4px 15px rgba(0,0,0,.3); background:rgba(0,0,0,.2) }
+.act-img { width:100%; height:130px; object-fit:cover; border-radius:15px 15px 0 0; margin-bottom:10px; background:rgba(255,255,255,.05); border-bottom:1px solid rgba(255,255,255,.08) }
+.act-card.has-img { padding:0; padding-bottom:16px }
+.act-card.has-img .act-ctx { padding:0 20px }
+.detail-hero-img { width:100%; max-width:480px; height:220px; object-fit:cover; border-radius:20px; margin:0 auto 24px auto; display:block; box-shadow:0 12px 40px rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.1) }
+.dp-img { width:100%; height:90px; object-fit:cover; border-radius:10px; margin-bottom:10px; background:rgba(0,0,0,.15) }
+.ticket:not(.bought) .ticket-cover canvas { pointer-events: none }
+.ticket.bought { animation: pulseBorder 1.5s infinite; }
+.ticket.bought .ticket-cover { pointer-events: auto; }
+.ticket.bought .ticket-inner { box-shadow: 0 0 20px var(--gold); }
+.ticket.bought .instant-btn { display:block; animation:fadeIn .3s; }
+@keyframes pulseBorder { 0% { box-shadow: 0 0 0 0px var(--gold); } 50% { box-shadow: 0 0 0 4px var(--gold); } 100% { box-shadow: 0 0 0 0px var(--gold); } }
 .multi-results{max-height:400px;overflow-y:auto}
 .mr-item{display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:8px;border-radius:var(--r);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);animation:fadeIn .4s}
 .mr-item .mr-lv{font-size:1.2rem;font-weight:900;min-width:50px;text-align:center}
@@ -225,6 +243,7 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
     </div>
     <div class="wiz-panel" id="ws2"><h3 style="margin-bottom:16px">活動資訊</h3>
       <div class="form-group"><label>活動名稱</label><input class="form-input" id="w-name" placeholder="例如：七龍珠一番賞"></div>
+      <div class="form-group"><label>活動封面圖片網址（選填）</label><input class="form-input" id="w-img" placeholder="https://..."></div>
       <div class="form-group"><label>活動密碼（參加者抽獎時需輸入）</label><input class="form-input" id="w-pwd" placeholder="設定活動密碼"></div>
       <hr style="border-color:rgba(255,255,255,.06);margin:16px 0">
       <h4 style="font-size:.9rem;color:var(--txt2);margin-bottom:12px"><i class="fas fa-dollar-sign"></i> 定價設定</h4>
@@ -234,18 +253,9 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
         <div class="form-group"><label>多抽價格</label><input class="form-input" id="w-price-m" type="number" min="0" placeholder="350" value="350"></div>
       </div>
     </div>
-    <div class="wiz-panel" id="ws3k"><h3 style="margin-bottom:12px">設定獎項</h3>
-      <div class="mode-toggle" id="alloc-toggle">
-        <button class="active" onclick="setAllocMode('qty')">數量模式</button>
-        <button onclick="setAllocMode('prob')">機率模式</button>
-      </div>
+    <div class="wiz-panel" id="ws3k"><h3 style="margin-bottom:12px">設定獎項與機率</h3>
       <div id="alloc-qty"><div id="plist"></div><button class="add-btn" onclick="addPR()" style="margin-top:10px"><i class="fas fa-plus"></i> 新增獎項</button></div>
-      <div id="alloc-prob" style="display:none">
-        <div class="form-group"><label>總券數</label><input class="form-input" id="w-total-t" type="number" min="1" value="80" onchange="calcProb()"></div>
-        <div id="prob-list"></div>
-        <button class="add-btn" onclick="addProbR()" style="margin-top:10px"><i class="fas fa-plus"></i> 新增獎項</button>
-        <div id="prob-preview" style="margin-top:12px;font-size:.82rem;color:var(--txt3)"></div>
-      </div>
+      <div id="w-total-t-disp" style="margin-top:10px;font-size:1rem;color:var(--gold);font-weight:bold;text-align:right">總數: 0</div>
     </div>
     <div class="wiz-panel" id="ws3s"><h3 style="margin-bottom:16px">刮刮樂設定</h3>
       <div class="form-group"><label>號碼總數</label><select class="form-input" id="w-nums" onchange="onNumsChg()"><option value="20">20</option><option value="40">40</option><option value="80">80</option><option value="100">100</option></select></div>
@@ -277,7 +287,7 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
   <div class="game-layout">
     <div>
       <div class="card" style="padding:12px">
-        <div style="text-align:center;margin-bottom:12px"><input class="form-input" id="kj-player" placeholder="請輸入您的名字" style="max-width:250px;text-align:center"></div>
+        <div style="text-align:center;margin-bottom:12px;color:var(--gold);font-size:.9rem" id="kj-player-info"></div>
         <div class="tickets-board" id="kj-board"></div>
       </div>
     </div>
@@ -290,11 +300,18 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 <section id="v-scratch" class="view">
   <div class="game-hdr">
     <button class="btn btn-outline btn-sm" onclick="R.go('home')" style="margin-bottom:10px"><i class="fas fa-arrow-left"></i> 返回</button>
-    <h2 id="sc-title"></h2><div style="color:var(--txt2);font-size:.82rem" id="sc-meta"></div><div id="sc-banner"></div>
+    <h2 id="sc-title"></h2><div style="color:var(--txt2);font-size:.82rem" id="sc-meta"></div>
+    <div id="sc-price"></div><div id="sc-banner"></div>
+    <div class="draw-bar" id="sc-drawbar" style="display:none">
+      <span class="sel-count" id="sc-sel-ct">已選 0 張</span>
+      <div style="flex:1"></div>
+      <button class="btn btn-gold btn-sm" id="sc-draw-btn" onclick="confirmScratch()" disabled><i class="fas fa-check"></i> 確認購買</button>
+      <button class="btn btn-outline btn-sm" onclick="clearScratchSelection()"><i class="fas fa-times"></i> 清除</button>
+    </div>
   </div>
   <div class="game-layout">
     <div class="card" style="padding:16px">
-      <div style="text-align:center;margin-bottom:14px"><input class="form-input" id="sc-player" placeholder="請輸入您的名字" style="max-width:250px;text-align:center"></div>
+      <div style="text-align:center;margin-bottom:14px;color:var(--gold);font-size:.9rem" id="sc-player-info"></div>
       <div id="sc-grid-wrap"></div>
     </div>
     <div><div class="prize-panel card" id="sc-panel"></div></div>
@@ -334,10 +351,11 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 <script>
 
 const GK='ichiban_gas_url';
-function gasUrl(){return localStorage.getItem(GK)||''}
-async function api(action,p={}){const u=gasUrl();if(!u)throw new Error('未設定API');const r=await fetch(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...p}),redirect:'follow'});return r.json()}
-const S={user:null,acts:[],curAct:null,curItems:[],curStats:[],drawMode:'single',multiN:5,selected:[],tearingIdx:null,
-wiz:{step:1,type:'',name:'',pwd:'',prizes:[],numbers:[],mode:'random',totalNums:20,manualP:[],paintSel:null,asgn:{},scratchP:[],allocMode:'qty',probPrizes:[],singlePrice:80,multiCount:5,multiPrice:350,totalTickets:80}};
+const DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycbzz4VWdv3JRVB3kWkcA6vFRgBavA05p_tOl8PpbqUMVdfYc6VloKqkIHdBsehXRr2TooQ/exec';
+function gasUrl(){return localStorage.getItem(GK)||DEFAULT_GAS_URL}
+async function api(action,p={}){const u=gasUrl();if(!u)throw new Error('未設定API');const r=await fetch(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...p}),redirect:'follow'});const txt=await r.text();try{return JSON.parse(txt)}catch(e){console.error('API非JSON回應:',txt.substring(0,500));throw new Error('伺服器忙碌中，請稍後再試。連線逾時或暫時無法存取。')}}
+const S={user:null,acts:[],curAct:null,curItems:[],curStats:[],drawMode:'single',multiN:5,selected:[],tearingIdx:null,pendingGame:null,
+wiz:{step:1,type:'',name:'',pwd:'',imageUrl:'',prizes:[],numbers:[],mode:'random',totalNums:20,manualP:[],paintSel:null,asgn:{},scratchP:[],singlePrice:80,multiCount:5,multiPrice:350,totalTickets:80}};
 const PC={'A賞':'#ffd700','B賞':'#c0c0c0','C賞':'#e88fa5','D賞':'#a855f7','F賞':'#3b82f6','G賞':'#22c55e','H賞':'#14b8a6'};
 const PL=['A賞','B賞','C賞','D賞','F賞','G賞','H賞'];
 function $(id){return document.getElementById(id)}
@@ -352,13 +370,13 @@ const R={go(p,d){location.hash='#/'+p+(d?'/'+encodeURIComponent(d):'')},init(){a
 handle(){const h=location.hash.slice(2)||'';const[pg,...rest]=h.split('/');const pm=rest.length?decodeURIComponent(rest.join('/')):'';
 document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
 if(!gasUrl()){$('v-setup').classList.add('active');return}
-switch(pg){case'detail':$('v-detail').classList.add('active');loadDetail(pm);break;case'my':if(!S.user){showModal('m-auth');R.go('home');return}$('v-my').classList.add('active');loadActs(true);break;case'create':if(!S.user){R.go('home');return}$('v-create').classList.add('active');initWiz();break;case'kuji':$('v-kuji').classList.add('active');loadGame(pm,'kuji');break;case'scratch':$('v-scratch').classList.add('active');loadGame(pm,'scratch');break;default:$('v-home').classList.add('active');loadActs(false)}}};
+switch(pg){case'detail':$('v-detail').classList.add('active');loadDetail(pm);break;case'my':if(!S.user){showModal('m-auth');R.go('home');return}$('v-my').classList.add('active');loadActs(true);break;case'create':if(!S.user){R.go('home');return}$('v-create').classList.add('active');initWiz();break;case'kuji':if(!S.user){toast('請先登入再抽獎','error');showModal('m-auth');R.go('home');return}$('v-kuji').classList.add('active');loadGame(pm,'kuji');break;case'scratch':if(!S.user){toast('請先登入再抽獎','error');showModal('m-auth');R.go('home');return}$('v-scratch').classList.add('active');loadGame(pm,'scratch');break;default:$('v-home').classList.add('active');loadActs(false)}}};
 
 function saveGas(){const u=$('gas-url').value.trim();if(!u){toast('請輸入網址','error');return}localStorage.setItem(GK,u);toast('設定完成！','success');api('init').then(()=>R.go('home')).catch(e=>toast('連線失敗','error'))}
 
 // ═══ AUTH ═══
 function authTab(t){$('auth-login').style.display=t==='login'?'':'none';$('auth-reg').style.display=t==='reg'?'':'none';$('tab-login').className='btn '+(t==='login'?'btn-gold':'btn-outline')+' btn-sm';$('tab-reg').className='btn '+(t==='reg'?'btn-gold':'btn-outline')+' btn-sm'}
-async function doLogin(){const u=$('a-user').value.trim(),p=$('a-pass').value.trim();if(!u||!p){toast('請填寫','error');return}showLoading();try{const r=await api('login',{username:u,password:p});hideLoading();if(r.success){S.user=r.username;closeModal('m-auth');updUIAuth();toast('登入成功！','success');R.go('my')}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗','error')}}
+async function doLogin(){const u=$('a-user').value.trim(),p=$('a-pass').value.trim();if(!u||!p){toast('請填寫','error');return}showLoading();try{const r=await api('login',{username:u,password:p});hideLoading();if(r.success){S.user=r.username;closeModal('m-auth');updUIAuth();toast('登入成功！','success');if(S.pendingGame){const p = S.pendingGame; S.pendingGame=null; enterGame(p.type, p.sheet);}else{R.go('my')}}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗: '+e.message,'error')}}
 async function doRegister(){const u=$('r-user').value.trim(),p=$('r-pass').value.trim();if(!u||!p){toast('請填寫','error');return}if(p.length<4){toast('密碼至少4字元','error');return}showLoading();try{const r=await api('register',{username:u,password:p});hideLoading();if(r.success){toast('註冊成功','success');authTab('login')}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗','error')}}
 function logout(){S.user=null;updUIAuth();toast('已登出','info');R.go('home')}
 function updUIAuth(){if(S.user){$('btn-login').style.display='none';$('btn-logout').style.display='';$('user-info').style.display='';$('user-info').innerHTML='<i class="fas fa-user"></i> '+S.user;$('user-info').onclick=()=>R.go('my')}else{$('btn-login').style.display='';$('btn-logout').style.display='none';$('user-info').style.display='none'}}
@@ -369,30 +387,48 @@ function renderActs(mine){const acts=mine?S.acts.filter(a=>a.creator===S.user):S
 if(!acts.length){el.innerHTML=mine?'<div style="text-align:center;padding:36px;color:var(--txt3)"><i class="fas fa-box-open" style="font-size:2rem;display:block;margin-bottom:10px"></i>尚無活動</div>':'';if(!mine)$('empty-st').style.display=acts.length?'none':'block';return}
 if(!mine)$('empty-st').style.display='none';
 el.innerHTML=acts.map(a=>{const t=+a.total||0,d=+a.drawn||0,pct=t?Math.round(d/t*100):0,tp=a.type,bg=a.hasBigPrize,sh=a.sheetName,sp=+a.singlePrice;
-return`<div class="card act-card" onclick="${mine?'':`R.go('detail','${sh}')`}" style="${mine?'cursor:default':''}">
+return`<div class="card act-card ${a.imageUrl?'has-img':''}" onclick="${mine?'':`R.go('detail','${sh}')`}" style="${mine?'cursor:default':''}">
+${a.imageUrl?`<img src="${a.imageUrl}" class="act-img" onerror="this.style.display='none'">`:''}
+<div class="${a.imageUrl?'act-ctx':''}">
 <span class="act-type ${tp}">${tp==='kuji'?'🎫 一番賞':'🎰 刮刮樂'}</span>
 <span class="big-badge ${bg==='有'?'has':'gone'}">${bg==='有'?'🏆 大獎尚在':'💨 大獎已出'}</span>
 <h3>${a.name}</h3><div class="act-meta">${a.created} · ${a.creator}</div>
 <div class="act-progress"><div class="act-progress-bar" style="width:${pct}%"></div></div>
 <div class="act-stats"><span>已抽 ${d}/${t}</span><span>${pct}%</span></div>
 ${sp?`<div class="price-tag">💰 ${sp}元/抽</div>`:''}
-${mine?`<div class="admin-controls"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();enterGame('${tp}','${sh}')"><i class="fas fa-eye"></i> 查看</button><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();cfReset('${sh}')"><i class="fas fa-redo"></i></button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();cfDel('${sh}')"><i class="fas fa-trash"></i></button></div>`:''}</div>`}).join('')}
+${mine?`<div class="admin-controls"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();enterGame('${tp}','${sh}')"><i class="fas fa-eye"></i> 查看</button><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();cfReset('${sh}')"><i class="fas fa-redo"></i></button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();cfDel('${sh}')"><i class="fas fa-trash"></i></button></div>`:''}</div></div>`}).join('')}
 
 // ═══ DETAIL VIEW (public) ═══
 async function loadDetail(sh){showLoading();try{const r=await api('getActivityDetail',{sheetName:sh});hideLoading();if(!r.success){toast(r.error,'error');return}
 const a=r.activityInfo,stats=r.stats,t=+a.total||0,d=+a.drawn||0,pct=t?Math.round(d/t*100):0,rem=t-d;
 const sp=+a.singlePrice,mc=+a.multiCount,mp=+a.multiPrice;
-let h=`<div class="detail-hero"><h1>${a.name}</h1><div style="color:var(--txt2);font-size:.85rem">${a.type==='kuji'?'🎫 一番賞':'🎰 刮刮樂'} · ${a.creator} · ${a.created}</div>
+let h=`<div class="detail-hero">
+${a.imageUrl?`<img src="${a.imageUrl}" class="detail-hero-img" onerror="this.style.display='none'">`:''}
+<h1>${a.name}</h1><div style="color:var(--txt2);font-size:.85rem">${a.type==='kuji'?'🎫 一番賞':'🎰 刮刮樂'} · ${a.creator} · ${a.created}</div>
 <div class="detail-stats-row"><div class="stat-box"><div class="sv">${t}</div><div class="sl">總數量</div></div><div class="stat-box"><div class="sv">${d}</div><div class="sl">已抽出</div></div><div class="stat-box"><div class="sv">${rem}</div><div class="sl">剩餘</div></div><div class="stat-box"><div class="sv">${pct}%</div><div class="sl">進度</div></div></div>`;
 if(sp)h+=`<div style="font-size:.9rem;color:var(--txt2);margin-top:8px">💰 ${sp}元/抽${mc&&mp?` · ${mc}抽 ${mp}元`:''}</div>`;
 h+=`<div style="margin-top:10px"><div class="big-banner ${a.hasBigPrize==='有'?'has':'gone'}">${a.hasBigPrize==='有'?'🏆 大獎尚在！':' 大獎已出'}</div></div></div>`;
 h+=`<h3 style="color:var(--gold);margin-bottom:14px"><i class="fas fa-trophy"></i> 獎項一覽</h3><div class="detail-prizes">`;
 stats.forEach(s=>{const c=pColor(s.level),pr=(s.total/t*100).toFixed(1);
-h+=`<div class="dp-card" style="background:${c}22;border:1px solid ${c}44"><div class="dp-lv" style="color:${c}">${s.level}</div><div class="dp-nm">${s.name}</div><div class="dp-bar"><div style="width:${s.total?Math.round(s.remaining/s.total*100):0}%"></div></div><div class="dp-ct">剩餘 ${s.remaining}/${s.total}</div><div class="dp-prob">中獎率 ${pr}%</div></div>`});
+h+=`<div class="dp-card" style="background:${c}22;border:1px solid ${c}44">
+${s.imageUrl?`<img src="${s.imageUrl}" class="dp-img" onerror="this.style.display='none'">`:''}
+<div class="dp-lv" style="color:${c}">${s.level}</div><div class="dp-nm">${s.name}</div><div class="dp-bar"><div style="width:${s.total?Math.round(s.remaining/s.total*100):0}%"></div></div><div class="dp-ct">剩餘 ${s.remaining}/${s.total}</div><div class="dp-prob">中獎率 ${pr}%</div></div>`});
 h+=`</div><div style="text-align:center;margin-top:28px"><button class="btn btn-gold btn-lg" onclick="enterGame('${a.type}','${sh}')"><i class="fas fa-play"></i> 開始抽獎！</button></div>`;
 $('detail-content').innerHTML=h}catch(e){hideLoading();toast('載入失敗','error')}}
 
-function enterGame(type,sheet){$('act-pwd-input').value='';showModal('m-actpwd');$('act-pwd-btn').onclick=async()=>{const pw=$('act-pwd-input').value.trim();if(!pw){toast('請輸入密碼','error');return}showLoading();try{const r=await api('verifyActivity',{sheetName:sheet,password:pw});hideLoading();if(r.success){closeModal('m-actpwd');R.go(type,sheet)}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗','error')}}}
+function enterGame(type,sheet){
+  const act = S.acts.find(a=>a.sheetName===sheet) || S.curAct || {creator:''};
+  if(!S.user){
+    S.pendingGame = {type, sheet};
+    toast('請先登入','info'); showModal('m-auth'); return;
+  }
+  if(S.user === act.creator){ R.go(type,sheet); return; }
+  $('act-pwd-input').value='';showModal('m-actpwd');
+  $('act-pwd-btn').onclick=async()=>{
+    const pw=$('act-pwd-input').value.trim();if(!pw){toast('請輸入密碼','error');return}
+    showLoading();try{const r=await api('verifyActivity',{sheetName:sheet,password:pw});hideLoading();if(r.success){closeModal('m-actpwd');R.go(type,sheet)}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗','error')}
+  }
+}
 
 async function cfReset(sh){$('cf-title').textContent='重置活動';$('cf-msg').textContent='確定重置？';$('cf-ok').onclick=async()=>{closeModal('m-confirm');showLoading();const r=await api('resetActivity',{sheetName:sh});hideLoading();if(r.success){toast('已重置','success');loadActs(true)}else toast(r.error,'error')};showModal('m-confirm')}
 async function cfDel(sh){$('cf-title').textContent='刪除活動';$('cf-msg').textContent='確定刪除？不可復原！';$('cf-ok').onclick=async()=>{closeModal('m-confirm');showLoading();const r=await api('deleteActivity',{sheetName:sh});hideLoading();if(r.success){toast('已刪除','success');loadActs(true)}else toast(r.error,'error')};showModal('m-confirm')}
@@ -402,58 +438,43 @@ function initWiz(){S.wiz={step:1,type:'',name:'',pwd:'',prizes:[],numbers:[],mod
 function rWizStep(){const w=S.wiz,steps=w.type==='scratch'?5:5;$('wiz-steps').innerHTML=Array.from({length:4},(_,i)=>`<div class="${i+1<w.step?'done':i+1===w.step?'cur':''}"></div>`).join('');
 document.querySelectorAll('.wiz-panel').forEach(p=>p.classList.remove('active'));
 if(w.step===1)$('ws1').classList.add('active');
-else if(w.step===2){$('ws2').classList.add('active');$('w-price1').value=w.singlePrice;$('w-multi-n').value=w.multiCount;$('w-price-m').value=w.multiPrice}
-else if(w.step===3){if(w.type==='kuji'){$('ws3k').classList.add('active');if(w.allocMode==='qty'){if(!w.prizes.length)w.prizes=PL.map(l=>({level:l,name:'',description:'',quantity:1}));rPList()}else{if(!w.probPrizes.length)w.probPrizes=PL.map(l=>({level:l,name:'',prob:0}));rProbList()}}else{$('ws3s').classList.add('active');onModeChg();onNumsChg()}}
+else if(w.step===2){$('ws2').classList.add('active');$('w-price1').value=w.singlePrice;$('w-multi-n').value=w.multiCount;$('w-price-m').value=w.multiPrice;$('w-img').value=w.imageUrl||''}
+else if(w.step===3){if(w.type==='kuji'){$('ws3k').classList.add('active');if(!w.prizes.length)w.prizes=PL.map(l=>({level:l,name:'',imageUrl:'',description:'',quantity:1}));rPList()}else{$('ws3s').classList.add('active');onModeChg();onNumsChg()}}
 else{$('ws4').classList.add('active');rConfirm()}
 let h='';if(w.step>1)h+=`<button class="btn btn-outline" onclick="S.wiz.step--;rWizStep()"><i class="fas fa-arrow-left"></i> 上一步</button>`;else h+='<div></div>';
 if(w.step<4)h+=`<button class="btn btn-gold" onclick="wizNext()">下一步 <i class="fas fa-arrow-right"></i></button>`;
 else h+=`<button class="btn btn-gold btn-lg" onclick="wizSubmit()"><i class="fas fa-check"></i> 建立</button>`;
 $('wiz-act').innerHTML=h}
 function wizType(t){S.wiz.type=t;document.querySelectorAll('#ws1 .card').forEach(c=>c.style.borderColor='rgba(255,255,255,.07)');$('t-'+t).style.borderColor='var(--gold)'}
-function wizNext(){const w=S.wiz;if(w.step===1&&!w.type){toast('請選擇類型','error');return}if(w.step===2){w.name=$('w-name').value.trim();w.pwd=$('w-pwd').value.trim();w.singlePrice=parseInt($('w-price1').value)||0;w.multiCount=parseInt($('w-multi-n').value)||0;w.multiPrice=parseInt($('w-price-m').value)||0;if(!w.name){toast('請輸入名稱','error');return}if(!w.pwd){toast('請設定活動密碼','error');return}}if(w.step===3){if(w.type==='kuji'){if(w.allocMode==='prob'){if(!collectProb())return}else{if(!collectP())return}}else{if(!collectS())return}}w.step++;rWizStep()}
+function wizNext(){const w=S.wiz;if(w.step===1&&!w.type){toast('請選擇類型','error');return}if(w.step===2){w.name=$('w-name').value.trim();w.pwd=$('w-pwd').value.trim();w.imageUrl=$('w-img').value.trim();w.singlePrice=parseInt($('w-price1').value)||0;w.multiCount=parseInt($('w-multi-n').value)||0;w.multiPrice=parseInt($('w-price-m').value)||0;if(!w.name){toast('請輸入名稱','error');return}if(!w.pwd){toast('請設定活動密碼','error');return}}if(w.step===3){if(w.type==='kuji'){if(!collectP())return}else{if(!collectS())return}}w.step++;rWizStep()}
 
-// Quantity mode
-function rPList(){$('plist').innerHTML=S.wiz.prizes.map((p,i)=>`<div class="prize-row"><span class="prize-tag" style="background:${pColor(p.level)};color:#000">${p.level}</span><input class="form-input" placeholder="獎品名稱" value="${p.name}" onchange="S.wiz.prizes[${i}].name=this.value"><input class="form-input" placeholder="描述" value="${p.description||''}" onchange="S.wiz.prizes[${i}].description=this.value" style="max-width:100px"><input class="form-input qty-input" type="number" min="0" value="${p.quantity}" onchange="S.wiz.prizes[${i}].quantity=parseInt(this.value)||0"><button class="btn btn-danger btn-sm" onclick="S.wiz.prizes.splice(${i},1);rPList()" style="flex-shrink:0"><i class="fas fa-times"></i></button></div>`).join('')}
-function addPR(){S.wiz.prizes.push({level:'H賞',name:'',description:'',quantity:1});rPList()}
+// Quantity mode (Combined with dynamic probability calculation)
+function rPList(){$('plist').innerHTML=S.wiz.prizes.map((p,i)=>`<div class="prize-row"><span class="prize-tag" style="background:${pColor(p.level)};color:#000">${p.level}</span><input class="form-input" placeholder="獎品名稱" value="${p.name}" onchange="S.wiz.prizes[${i}].name=this.value"><input class="form-input" placeholder="圖片網址(選填)" value="${p.imageUrl||''}" onchange="S.wiz.prizes[${i}].imageUrl=this.value" style="max-width:140px"><input class="form-input" placeholder="描述(選填)" value="${p.description||''}" onchange="S.wiz.prizes[${i}].description=this.value" style="max-width:100px"><input class="form-input qty-input" type="number" min="0" value="${p.quantity}" onchange="S.wiz.prizes[${i}].quantity=parseInt(this.value)||0;calcProb()"><div style="flex:1;text-align:right;font-size:.8rem;color:var(--txt3)" id="psp-${i}"></div><button class="btn btn-danger btn-sm" onclick="S.wiz.prizes.splice(${i},1);rPList()" style="flex-shrink:0"><i class="fas fa-times"></i></button></div>`).join('');calcProb()}
+function addPR(){S.wiz.prizes.push({level:'H賞',name:'',imageUrl:'',description:'',quantity:1});rPList()}
+function calcProb(){const ps=S.wiz.prizes,tt=ps.reduce((a,p)=>a+(parseInt(p.quantity)||0),0);ps.forEach((p,i)=>{const e=$('psp-'+i);if(e)e.textContent=tt>0?((parseInt(p.quantity)||0)/tt*100).toFixed(1)+'%':'0%'});const dp=$('w-total-t-disp');if(dp)dp.textContent=`總數: ${tt}`}
 function collectP(){const ps=S.wiz.prizes.filter(p=>p.quantity>0);if(!ps.length){toast('至少一個獎項','error');return false}if(ps.some(p=>!p.name)){toast('請填寫獎品名稱','error');return false}S.wiz.prizes=ps;return true}
 
-// Probability mode
-function setAllocMode(m){S.wiz.allocMode=m;document.querySelectorAll('#alloc-toggle button').forEach((b,i)=>b.className=((i===0&&m==='qty')||(i===1&&m==='prob'))?'active':'');$('alloc-qty').style.display=m==='qty'?'':'none';$('alloc-prob').style.display=m==='prob'?'':'none';if(m==='prob'){if(!S.wiz.probPrizes.length)S.wiz.probPrizes=[{level:'A賞',name:'',prob:1.25},{level:'B賞',name:'',prob:2.5},{level:'C賞',name:'',prob:5},{level:'H賞',name:'',prob:0}];rProbList()}}
-function rProbList(){$('prob-list').innerHTML=S.wiz.probPrizes.map((p,i)=>`<div class="prize-row"><select class="form-input" style="max-width:75px" onchange="S.wiz.probPrizes[${i}].level=this.value;calcProb()">${PL.map(l=>`<option ${l===p.level?'selected':''}>${l}</option>`).join('')}</select><input class="form-input" placeholder="獎品名稱" value="${p.name}" onchange="S.wiz.probPrizes[${i}].name=this.value"><input class="form-input qty-input" type="number" step="0.1" min="0" max="100" value="${p.prob}" onchange="S.wiz.probPrizes[${i}].prob=parseFloat(this.value)||0;calcProb()" placeholder="%"><button class="btn btn-danger btn-sm" onclick="S.wiz.probPrizes.splice(${i},1);rProbList()" style="flex-shrink:0"><i class="fas fa-times"></i></button></div>`).join('');calcProb()}
-function addProbR(){S.wiz.probPrizes.push({level:'H賞',name:'',prob:0});rProbList()}
-function calcProb(){const tt=parseInt($('w-total-t').value)||80;S.wiz.totalTickets=tt;const ps=S.wiz.probPrizes;let used=0;const preview=[];
-ps.forEach((p,i)=>{if(p.prob>0){const q=Math.round(tt*p.prob/100);used+=q;preview.push(`${p.level}:${q}個(${p.prob}%)`)}});
-const rem=tt-used;if(rem>0){const last=ps.find(p=>p.prob===0);if(last)preview.push(`${last.level}:${rem}個(自動填滿)`)}
-$('prob-preview').innerHTML=`總券數:${tt} | ${preview.join(' · ')} ${used<=tt?'<span style="color:var(--success)">✓</span>':'<span style="color:var(--danger)">超出！</span>'}`}
-function collectProb(){const tt=S.wiz.totalTickets;const ps=S.wiz.probPrizes.filter(p=>p.name);if(!ps.length){toast('請填寫獎品名稱','error');return false}
-const result=[];let used=0;ps.forEach(p=>{if(p.prob>0){const q=Math.max(1,Math.round(tt*p.prob/100));for(let i=0;i<q;i++)result.push({level:p.level,name:p.name,description:''});used+=q}});
-const rem=tt-used;const filler=ps.find(p=>p.prob===0)||ps[ps.length-1];
-for(let i=0;i<Math.max(0,rem);i++)result.push({level:filler.level,name:filler.name,description:''});
-// Convert to prizes array with quantities
-const qmap={};result.forEach(r=>{const k=r.level;if(!qmap[k])qmap[k]={level:r.level,name:r.name,description:'',quantity:0};qmap[k].quantity++});
-S.wiz.prizes=Object.values(qmap);return true}
-
-// Scratch setup (unchanged)
+// Scratch setup (unchanged logic mostly)
 function onNumsChg(){S.wiz.totalNums=parseInt($('w-nums').value);if(S.wiz.mode==='manual')rPaintGrid();updSqst()}
-function onModeChg(){S.wiz.mode=$('w-mode').value;if(S.wiz.mode==='random'){$('s-rand').style.display='';$('s-man').style.display='none';if(!S.wiz.scratchP.length)S.wiz.scratchP=[{level:'A賞',name:'',quantity:1},{level:'B賞',name:'',quantity:2},{level:'H賞',name:'',quantity:0}];rSPList()}else{$('s-rand').style.display='none';$('s-man').style.display='';if(!S.wiz.manualP.length){S.wiz.manualP=[{level:'A賞',name:''},{level:'B賞',name:''},{level:'H賞',name:''}];S.wiz.asgn={};S.wiz.paintSel=null}rManual()}}
-function rSPList(){$('splist').innerHTML=(S.wiz.scratchP||[]).map((p,i)=>`<div class="prize-row"><select class="form-input" style="max-width:75px" onchange="S.wiz.scratchP[${i}].level=this.value">${PL.map(l=>`<option ${l===p.level?'selected':''}>${l}</option>`).join('')}</select><input class="form-input" placeholder="獎品名稱" value="${p.name}" onchange="S.wiz.scratchP[${i}].name=this.value"><input class="form-input qty-input" type="number" min="0" value="${p.quantity}" onchange="S.wiz.scratchP[${i}].quantity=parseInt(this.value)||0;updSqst()"><button class="btn btn-danger btn-sm" onclick="S.wiz.scratchP.splice(${i},1);rSPList()" style="flex-shrink:0"><i class="fas fa-times"></i></button></div>`).join('');updSqst()}
-function addSPR(){S.wiz.scratchP.push({level:'H賞',name:'',quantity:1});rSPList()}
+function onModeChg(){S.wiz.mode=$('w-mode').value;if(S.wiz.mode==='random'){$('s-rand').style.display='';$('s-man').style.display='none';if(!S.wiz.scratchP.length)S.wiz.scratchP=[{level:'A賞',name:'',imageUrl:'',quantity:1},{level:'B賞',name:'',imageUrl:'',quantity:2},{level:'H賞',name:'',imageUrl:'',quantity:0}];rSPList()}else{$('s-rand').style.display='none';$('s-man').style.display='';if(!S.wiz.manualP.length){S.wiz.manualP=[{level:'A賞',name:'',imageUrl:''},{level:'B賞',name:'',imageUrl:''},{level:'H賞',name:'',imageUrl:''}];S.wiz.asgn={};S.wiz.paintSel=null}rManual()}}
+function rSPList(){$('splist').innerHTML=(S.wiz.scratchP||[]).map((p,i)=>`<div class="prize-row"><select class="form-input" style="max-width:75px" onchange="S.wiz.scratchP[${i}].level=this.value">${PL.map(l=>`<option ${l===p.level?'selected':''}>${l}</option>`).join('')}</select><input class="form-input" placeholder="獎品名稱" value="${p.name}" onchange="S.wiz.scratchP[${i}].name=this.value"><input class="form-input" placeholder="圖片網址(選填)" value="${p.imageUrl||''}" onchange="S.wiz.scratchP[${i}].imageUrl=this.value" style="max-width:120px"><input class="form-input qty-input" type="number" min="0" value="${p.quantity}" onchange="S.wiz.scratchP[${i}].quantity=parseInt(this.value)||0;updSqst()"><button class="btn btn-danger btn-sm" onclick="S.wiz.scratchP.splice(${i},1);rSPList()" style="flex-shrink:0"><i class="fas fa-times"></i></button></div>`).join('');updSqst()}
+function addSPR(){S.wiz.scratchP.push({level:'H賞',name:'',imageUrl:'',quantity:1});rSPList()}
 function updSqst(){const t=S.wiz.totalNums,s=(S.wiz.scratchP||[]).reduce((a,p)=>a+(p.quantity||0),0);$('sqst').innerHTML=`已分配:${s}/${t} ${s===t?'<span style="color:var(--success)">✓</span>':'<span style="color:#f59e0b">⚠</span>'}`}
 function rManual(){rMPDef();rPPal();rPaintGrid()}
-function rMPDef(){$('mpdef').innerHTML=(S.wiz.manualP||[]).map((p,i)=>`<div class="prize-row"><select class="form-input" style="max-width:75px" onchange="S.wiz.manualP[${i}].level=this.value;rPPal()">${PL.map(l=>`<option ${l===p.level?'selected':''}>${l}</option>`).join('')}</select><input class="form-input" placeholder="獎品名稱" value="${p.name}" onchange="S.wiz.manualP[${i}].name=this.value"><button class="btn btn-danger btn-sm" onclick="S.wiz.manualP.splice(${i},1);rManual()" style="flex-shrink:0"><i class="fas fa-times"></i></button></div>`).join('')}
-function addMPD(){S.wiz.manualP.push({level:'H賞',name:''});rManual()}
+function rMPDef(){$('mpdef').innerHTML=(S.wiz.manualP||[]).map((p,i)=>`<div class="prize-row"><select class="form-input" style="max-width:75px" onchange="S.wiz.manualP[${i}].level=this.value;rPPal()">${PL.map(l=>`<option ${l===p.level?'selected':''}>${l}</option>`).join('')}</select><input class="form-input" placeholder="獎品名稱" value="${p.name}" onchange="S.wiz.manualP[${i}].name=this.value"><input class="form-input" placeholder="圖片網址(選填)" value="${p.imageUrl||''}" onchange="S.wiz.manualP[${i}].imageUrl=this.value" style="max-width:140px"><button class="btn btn-danger btn-sm" onclick="S.wiz.manualP.splice(${i},1);rManual()" style="flex-shrink:0"><i class="fas fa-times"></i></button></div>`).join('')}
+function addMPD(){S.wiz.manualP.push({level:'H賞',name:'',imageUrl:''});rManual()}
 function rPPal(){$('ppal').innerHTML='<h4 style="margin-bottom:8px;font-size:.82rem;color:var(--txt2)">選擇獎項</h4>'+(S.wiz.manualP||[]).map((p,i)=>`<div class="pal-item ${S.wiz.paintSel===i?'sel':''}" onclick="S.wiz.paintSel=${i};rPPal()"><div class="pal-dot" style="background:${pColor(p.level)}"></div><span>${p.level}</span></div>`).join('')+`<div class="pal-item ${S.wiz.paintSel==='e'?'sel':''}" onclick="S.wiz.paintSel='e';rPPal()"><div class="pal-dot" style="background:#666"></div><span>橡皮擦</span></div>`}
 function rPaintGrid(){const t=S.wiz.totalNums,c=t<=20?'g20':t<=40?'g40':t<=80?'g80':'g100';let h=`<div class="num-grid ${c}">`;for(let n=1;n<=t;n++){const a=S.wiz.asgn[n],bg=a?pColor(a.level):'';h+=`<div class="ncell ${a?'asgn':''}" style="${a?'background:'+bg:''}" onclick="paintN(${n})">${n}</div>`}h+='</div>';$('pgrid').innerHTML=h;updMqst()}
-function paintN(n){const s=S.wiz.paintSel;if(s===null){toast('請先選擇','info');return}if(s==='e')delete S.wiz.asgn[n];else{const p=S.wiz.manualP[s];S.wiz.asgn[n]={level:p.level,name:p.name}}rPaintGrid()}
-function fillRem(){const s=S.wiz.paintSel;if(s===null||s==='e')return;const p=S.wiz.manualP[s];for(let n=1;n<=S.wiz.totalNums;n++)if(!S.wiz.asgn[n])S.wiz.asgn[n]={level:p.level,name:p.name};rPaintGrid()}
+function paintN(n){const s=S.wiz.paintSel;if(s===null){toast('請先選擇','info');return}if(s==='e')delete S.wiz.asgn[n];else{const p=S.wiz.manualP[s];S.wiz.asgn[n]={level:p.level,name:p.name,imageUrl:p.imageUrl||''}}rPaintGrid()}
+function fillRem(){const s=S.wiz.paintSel;if(s===null||s==='e')return;const p=S.wiz.manualP[s];for(let n=1;n<=S.wiz.totalNums;n++)if(!S.wiz.asgn[n])S.wiz.asgn[n]={level:p.level,name:p.name,imageUrl:p.imageUrl||''};rPaintGrid()}
 function clearAsgn(){S.wiz.asgn={};rPaintGrid()}
 function updMqst(){const t=S.wiz.totalNums,a=Object.keys(S.wiz.asgn).length;$('mqst').innerHTML=`已分配:${a}/${t} ${a===t?'<span style="color:var(--success)">✓</span>':'<span style="color:#f59e0b">⚠ '+(t-a)+'個未分配</span>'}`}
-function collectS(){const w=S.wiz,t=w.totalNums;if(w.mode==='random'){const ps=(w.scratchP||[]).filter(p=>p.quantity>0);if(!ps.length){toast('至少一個獎項','error');return false}if(ps.some(p=>!p.name)){toast('請填寫獎品名稱','error');return false}const s=ps.reduce((a,p)=>a+p.quantity,0);if(s!==t){toast(`數量${s}≠${t}`,'error');return false}const pool=[];ps.forEach(p=>{for(let i=0;i<p.quantity;i++)pool.push({level:p.level,name:p.name})});for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}w.numbers=pool.map((p,i)=>({number:i+1,level:p.level,name:p.name}))}else{const a=Object.keys(w.asgn).length;if(a<t){toast(`還有${t-a}個未分配`,'error');return false}w.numbers=[];for(let n=1;n<=t;n++){const x=w.asgn[n];w.numbers.push({number:n,level:x.level,name:x.name})}}return true}
+function collectS(){const w=S.wiz,t=w.totalNums;if(w.mode==='random'){const ps=(w.scratchP||[]).filter(p=>p.quantity>0);if(!ps.length){toast('至少一個獎項','error');return false}if(ps.some(p=>!p.name)){toast('請填寫獎品名稱','error');return false}const s=ps.reduce((a,p)=>a+p.quantity,0);if(s!==t){toast(`數量${s}≠${t}`,'error');return false}const pool=[];ps.forEach(p=>{for(let i=0;i<p.quantity;i++)pool.push({level:p.level,name:p.name,imageUrl:p.imageUrl||''})});for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}w.numbers=pool.map((p,i)=>({number:i+1,level:p.level,name:p.name,imageUrl:p.imageUrl||''}))}else{const a=Object.keys(w.asgn).length;if(a<t){toast(`還有${t-a}個未分配`,'error');return false}w.numbers=[];for(let n=1;n<=t;n++){const x=w.asgn[n];w.numbers.push({number:n,level:x.level,name:x.name,imageUrl:x.imageUrl||''})}}return true}
 function rConfirm(){const w=S.wiz;let h=`<p><b>名稱：</b>${w.name}</p><p><b>類型：</b>${w.type==='kuji'?'一番賞':'刮刮樂'}</p><p><b>密碼：</b>${w.pwd}</p>`;
 if(w.singlePrice)h+=`<p><b>定價：</b>${w.singlePrice}元/抽${w.multiCount?` · ${w.multiCount}抽${w.multiPrice}元`:''}</p>`;
 h+='<hr style="border-color:rgba(255,255,255,.08);margin:10px 0">';
 if(w.type==='kuji'){const tt=w.prizes.reduce((a,p)=>a+p.quantity,0);h+=`<p><b>總數：</b>${tt}</p>`;w.prizes.forEach(p=>{h+=`<div style="display:flex;align-items:center;gap:6px;margin:4px 0"><span style="background:${pColor(p.level)};color:#000;padding:2px 6px;border-radius:4px;font-size:.75rem;font-weight:700">${p.level}</span>${p.name}<span style="color:var(--txt3);margin-left:auto">×${p.quantity}</span></div>`})}else{h+=`<p><b>號碼：</b>${w.numbers.length}</p>`;const ct={};w.numbers.forEach(n=>{if(!ct[n.level])ct[n.level]={level:n.level,name:n.name,count:0};ct[n.level].count++});Object.values(ct).forEach(c=>{h+=`<div style="display:flex;align-items:center;gap:6px;margin:4px 0"><span style="background:${pColor(c.level)};color:#000;padding:2px 6px;border-radius:4px;font-size:.75rem;font-weight:700">${c.level}</span>${c.name}<span style="color:var(--txt3);margin-left:auto">×${c.count}</span></div>`})}$('confirm-box').innerHTML=h}
-async function wizSubmit(){const w=S.wiz;showLoading();try{const d={type:w.type,name:w.name,activityPassword:w.pwd,creator:S.user,singlePrice:w.singlePrice,multiCount:w.multiCount,multiPrice:w.multiPrice};if(w.type==='kuji')d.prizes=w.prizes;else d.numbers=w.numbers;const r=await api('createActivity',{data:JSON.stringify(d)});hideLoading();if(r.success){toast('建立成功！','success');R.go('my')}else toast(r.error||'失敗','error')}catch(e){hideLoading();toast('連線失敗','error')}}
+async function wizSubmit(){const w=S.wiz;showLoading();try{const d={type:w.type,name:w.name,activityPassword:w.pwd,creator:S.user,singlePrice:w.singlePrice,multiCount:w.multiCount,multiPrice:w.multiPrice,imageUrl:w.imageUrl||''};if(w.type==='kuji')d.prizes=w.prizes;else d.numbers=w.numbers;const r=await api('createActivity',{data:JSON.stringify(d)});hideLoading();if(r.success){toast('建立成功！','success');R.go('my')}else toast(r.error||'失敗','error')}catch(e){hideLoading();toast('連線失敗','error')}}
 
 // ═══ GAME LOAD ═══
 async function loadGame(sh,type){S.selected=[];S.drawMode='single';S.tearingIdx=null;showLoading();try{const r=await api('getActivityDetail',{sheetName:sh});if(!r.success){hideLoading();toast(r.error,'error');return}S.curAct=r.activityInfo;S.curItems=r.items;S.curStats=r.stats;S.multiN=+S.curAct.multiCount||5;if(type==='kuji')rKuji(sh);else rScratch(sh);if(S.user&&S.user===S.curAct.creator)loadLog(sh,type)}catch(e){toast('載入失敗','error')}hideLoading()}
@@ -462,97 +483,138 @@ function rPanel(stats,id){$(id).innerHTML=`<h3><i class="fas fa-trophy"></i> 獎
 
 // ═══ KUJI GAME ═══
 function rKuji(sh){const a=S.curAct;$('kj-title').textContent=a.name;$('kj-meta').textContent=`已抽 ${a.drawn}/${a.total}`;
+$('kj-player-info').innerHTML=`<i class="fas fa-user"></i> 抽獎者：${S.user}`;
 const sp=+a.singlePrice,mc=+a.multiCount,mp=+a.multiPrice,rem=(+a.total)-(+a.drawn);
-let ph='';if(sp){ph+=`<div class="price-display"><div class="pd single sel" onclick="setDrawMode('single','${sh}')" id="dm-single">1抽 ${sp}元</div>`;if(mc&&mp&&rem>=mc)ph+=`<div class="pd multi" onclick="setDrawMode('multi','${sh}')" id="dm-multi">${mc}抽 ${mp}元</div>`;ph+='</div>'}
+let ph='<div class="draw-mode-selector"><span class="dms-label">🎫 抽獎方式：</span>';
+ph+=`<button class="dms-btn ${S.drawMode==='single'?'sel':''}" onclick="setDrawMode('single','${sh}')">單抽 1 張${sp?`<span class="dms-price">${sp}元</span>`:''}</button>`;
+if(mc&&mc>0&&rem>=mc) ph+=`<button class="dms-btn ${S.drawMode==='multi'?'sel':''}" onclick="setDrawMode('multi','${sh}')">${mc} 連抽${mp?`<span class="dms-price">${mp}元</span>`:''}</button>`;
+ph+='</div>';
 $('kj-price').innerHTML=ph;
 const bg=a.hasBigPrize;$('kj-banner').innerHTML=`<div class="big-banner ${bg==='有'?'has':'gone'}">${bg==='有'?'🏆 大獎尚在！':'😢 大獎已出...'}</div>`;
 $('kj-drawbar').style.display=(S.drawMode==='multi')?'flex':'none';
-// Shuffle display order
-const items=S.curItems.map((it,i)=>({...it,origIdx:i}));for(let i=items.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[items[i],items[j]]=[items[j],items[i]]}
+// Display cards in sequential order (prizes already randomized on backend)
+const items=S.curItems.map((it,i)=>({...it,origIdx:i}));
 S._displayItems=items;
-$('kj-board').innerHTML=items.map(it=>{const drawn=it['狀態']==='已抽';const lv=it['獎項等級'];const c=pColor(lv);const idx=it.origIdx;const sel=S.selected.includes(idx);
-return`<div class="ticket ${drawn?'drawn':''} ${sel?'selected':''}" data-idx="${idx}" onclick="onTicketClick(${idx},'${sh}')">
+function getTicketNum(item){return item['編號'] ?? item['號碼'] ?? Object.values(item)[0]}
+$('kj-board').innerHTML=items.map(it=>{const drawn=it['狀態']==='已抽';const lv=it['獎項等級'];const c=pColor(lv);const idx=it.origIdx;const sel=S.selected.includes(idx);const tnum=getTicketNum(it);
+return`<div class="ticket ${drawn?'drawn':''} ${sel?'selected':''}" data-idx="${idx}" data-num="${tnum}" onclick="onTicketClick(${idx},'${sh}')">
 <div class="ticket-inner"><div class="ticket-prize" style="background:linear-gradient(135deg,${c},${c}88)"><div class="tp-lv">${lv}</div><div class="tp-nm">${it['獎品名稱']}</div>${drawn?`<div class="tp-who"><i class="fas fa-user"></i> ${it['抽獎者']}</div>`:''}</div>
-${drawn?'':`<div class="ticket-cover"><canvas></canvas></div><button class="instant-btn" onclick="event.stopPropagation();instantReveal(${idx},'${sh}')">直接開獎</button>`}
+${drawn?'':`<div class="ticket-cover"><canvas></canvas><div class="tear-hint">👆 拖曳撕開</div></div><button class="instant-btn" onclick="event.stopPropagation();instantReveal(${idx},'${sh}')">⚡ 直接開獎</button>`}
 </div></div>`}).join('');
 // Init tear canvases
 document.querySelectorAll('.ticket:not(.drawn)').forEach(initTearCanvas);
 rPanel(S.curStats,'kj-panel');updDrawBar()}
 
 function setDrawMode(m,sh){S.drawMode=m;S.selected=[];const rem=(+S.curAct.total)-(+S.curAct.drawn);
-document.querySelectorAll('.price-display .pd').forEach(d=>d.classList.remove('sel'));
-if(m==='single'){const el=$('dm-single');if(el)el.classList.add('sel');$('kj-drawbar').style.display='none'}
-else{const el=$('dm-multi');if(el)el.classList.add('sel');if(rem<S.multiN){toast(`剩餘${rem}張，不足${S.multiN}抽`,'error');setDrawMode('single',sh);return}$('kj-drawbar').style.display='flex'}
+document.querySelectorAll('.draw-mode-selector .dms-btn').forEach(d=>d.classList.remove('sel'));
+if(m==='single'){document.querySelectorAll('.draw-mode-selector .dms-btn')[0]?.classList.add('sel');$('kj-drawbar').style.display='none'}
+else{const btns=document.querySelectorAll('.draw-mode-selector .dms-btn');if(btns[1])btns[1].classList.add('sel');if(rem<S.multiN){toast(`剩餘${rem}張，不足${S.multiN}抽`,'error');setDrawMode('single',sh);return}$('kj-drawbar').style.display='flex'}
 document.querySelectorAll('.ticket').forEach(t=>t.classList.remove('selected'));updDrawBar()}
 
 function updDrawBar(){$('kj-sel-ct').textContent=`已選 ${S.selected.length}/${S.drawMode==='multi'?S.multiN:1} 張`;$('kj-draw-btn').disabled=S.selected.length<(S.drawMode==='multi'?S.multiN:1)}
 
-function onTicketClick(idx,sh){const player=$('kj-player').value.trim();if(!player){toast('請輸入您的名字','error');return}
+function onTicketClick(idx,sh){if(!S.user){toast('請先登入','error');return}const player=S.user;
+const ticket=document.querySelector(`.ticket[data-idx="${idx}"]`);
+if(ticket&&ticket.classList.contains('bought'))return;
 const item=S.curItems[idx];if(item['狀態']==='已抽'){toast('此獎券已被抽走','error');return}
+const tnum = item['編號'] ?? item['號碼'] ?? Object.values(item)[0];
 if(S.drawMode==='single'){// Single draw: confirm dialog
-$('draw-cf-content').innerHTML=`<p style="font-size:1.1rem">確定要選擇 <b style="color:var(--gold)">#${String(item['編號']).padStart(2,'0')}</b> 嗎？</p><p style="font-size:.8rem;margin-top:6px;color:var(--txt3)">確認後將開始撕開獎券</p>`;
-$('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');startTear(idx,sh)};showModal('m-draw-cf')}
+$('draw-cf-content').innerHTML=`<p style="font-size:1.1rem">確定要選擇 <b style="color:var(--gold)">#${String(tnum).padStart(2,'0')}</b> 嗎？</p><p style="font-size:.8rem;margin-top:6px;color:var(--txt3)">確認購買後將解鎖手動撕開功能</p>`;
+$('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doSingleDraw(idx,sh)};showModal('m-draw-cf')}
 else{// Multi draw: toggle selection
 const si=S.selected.indexOf(idx);if(si>=0){S.selected.splice(si,1);document.querySelector(`.ticket[data-idx="${idx}"]`)?.classList.remove('selected')}
 else{if(S.selected.length>=S.multiN){toast(`最多選${S.multiN}張`,'info');return}S.selected.push(idx);document.querySelector(`.ticket[data-idx="${idx}"]`)?.classList.add('selected')}updDrawBar()}}
 
-function confirmDraw(){const player=$('kj-player').value.trim();if(!player){toast('請輸入名字','error');return}
-const sh=location.hash.split('/').pop();const nums=S.selected.map(i=>'#'+String(S.curItems[i]['編號']).padStart(2,'0')).join(', ');
+function confirmDraw(){if(!S.user){toast('請先登入','error');return}const player=S.user;
+const sh=location.hash.split('/').pop();const nums=S.selected.map(i=>{const it=S.curItems[i];const n=it['編號']??it['號碼']??Object.values(it)[0];return '#'+String(n).padStart(2,'0')}).join(', ');
 $('draw-cf-content').innerHTML=`<p>確定抽取 <b style="color:var(--gold)">${nums}</b>？</p><p style="font-size:.85rem;color:var(--txt2);margin-top:6px">共 ${S.selected.length} 張</p>`;
 $('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doMultiDraw(S.selected,sh,player)};showModal('m-draw-cf')}
 
 // ═══ TEAR ANIMATION ═══
 function initTearCanvas(ticket){const canvas=ticket.querySelector('.ticket-cover canvas');if(!canvas)return;
 const rect=ticket.querySelector('.ticket-inner').getBoundingClientRect();const W=rect.width||100,H=rect.height||150;canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
-// Brown/gold paper gradient
-const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#8B7355');g.addColorStop(.3,'#C4A265');g.addColorStop(.6,'#8B6914');g.addColorStop(1,'#C4A265');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-// Paper texture
-ctx.strokeStyle='rgba(0,0,0,.04)';ctx.lineWidth=1;for(let i=-H;i<W;i+=7){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}
-// Number
+// Rich gold/bronze paper gradient
+const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#A0855C');g.addColorStop(.25,'#D4AF61');g.addColorStop(.5,'#B8942F');g.addColorStop(.75,'#D4B96A');g.addColorStop(1,'#A07D4A');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+// Subtle paper fiber texture
+ctx.globalAlpha=0.06;for(let i=0;i<80;i++){ctx.strokeStyle=Math.random()>.5?'#000':'#fff';ctx.lineWidth=Math.random()*1.5;ctx.beginPath();const sx=Math.random()*W,sy=Math.random()*H;ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.random()*20-10,sy+Math.random()*20-10);ctx.stroke()}ctx.globalAlpha=1;
+// Cross-hatch pattern
+ctx.strokeStyle='rgba(0,0,0,.03)';ctx.lineWidth=.5;for(let i=-H;i<W;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}
+for(let i=0;i<W+H;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i-H,H);ctx.stroke()}
+// Number with embossed style
 const num=ticket.dataset.idx!==undefined?S.curItems[parseInt(ticket.dataset.idx)]?.['編號']:'';
-ctx.fillStyle='rgba(0,0,0,.25)';ctx.font=`bold ${W*.28}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(num).padStart(2,'0'),W/2,H*.35);
-ctx.font=`${W*.09}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillText('一番賞',W/2,H*.55);
-// Dotted tear line
-ctx.setLineDash([3,3]);ctx.strokeStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.moveTo(W*.15,H*.65);ctx.lineTo(W*.85,H*.65);ctx.stroke();ctx.setLineDash([]);
-ctx.font=`bold ${W*.08}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillText('↓ 撕開看獎 ↓',W/2,H*.8);
+const numStr=String(num).padStart(2,'0');
+ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.font=`bold ${W*.3}px serif`;
+ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillText(numStr,W/2+1,H*.32+1);
+ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillText(numStr,W/2,H*.32);
+// Label
+ctx.font=`600 ${W*.1}px ${getComputedStyle(document.body).fontFamily}`;
+ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillText('一 番 賞',W/2,H*.5);
+// Perforated tear line
+ctx.setLineDash([2,4]);ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=1.5;
+ctx.beginPath();ctx.moveTo(W*.08,H*.62);ctx.lineTo(W*.92,H*.62);ctx.stroke();ctx.setLineDash([]);
+// Scissors icon area
+ctx.font=`${W*.07}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillText('✂ - - - - - - - - - ✂',W/2,H*.62);
+// Arrow hint at bottom
+ctx.font=`bold ${W*.085}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.22)';ctx.fillText('⬇ 由此撕開 ⬇',W/2,H*.78);
+// Gold foil shine effect
+const shine=ctx.createLinearGradient(0,0,W,0);shine.addColorStop(0,'rgba(255,255,255,0)');shine.addColorStop(.45,'rgba(255,255,255,0)');shine.addColorStop(.5,'rgba(255,255,255,.08)');shine.addColorStop(.55,'rgba(255,255,255,0)');shine.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=shine;ctx.fillRect(0,0,W,H);
 // Store original
 ticket._origData=ctx.getImageData(0,0,W,H);ticket._W=W;ticket._H=H;
-// Jagged edge points (pre-computed)
-ticket._jags=Array.from({length:40},()=>(Math.random()-.5)*6);
+// Jagged edge points (pre-computed) - more points for realistic tear
+ticket._jags=Array.from({length:60},()=>(Math.random()-.5)*8);
 ticket._tearProg=0;ticket._tearDir=null;ticket._dragging=false;
 const cover=ticket.querySelector('.ticket-cover');
-function onStart(e){e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();ticket._sx=t.clientX-r.left;ticket._sy=t.clientY-r.top;ticket._dragging=true;ticket._tearDir=null;ticket._tearProg=0}
+function onStart(e){e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();ticket._sx=t.clientX-r.left;ticket._sy=t.clientY-r.top;ticket._dragging=true;ticket._tearDir=null;ticket._tearProg=0;cover.querySelector('.tear-hint')?.remove()}
 function onMove(e){if(!ticket._dragging)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();const ex=t.clientX-r.left,ey=t.clientY-r.top;const dx=ex-ticket._sx,dy=ey-ticket._sy;
-if(!ticket._tearDir){const ad=Math.abs(dx),ay=Math.abs(dy);if(ad>15||ay>15)ticket._tearDir=ad>ay?(dx>0?'right':'left'):(dy>0?'down':'up')}
+if(!ticket._tearDir){const ad=Math.abs(dx),ay=Math.abs(dy);if(ad>10||ay>10)ticket._tearDir=ad>ay?(dx>0?'right':'left'):(dy>0?'down':'up')}
 if(!ticket._tearDir)return;
 const dist=ticket._tearDir==='right'||ticket._tearDir==='left'?Math.abs(dx):Math.abs(dy);const max=ticket._tearDir==='right'||ticket._tearDir==='left'?W:H;
-ticket._tearProg=Math.min(1,dist/(max*.7));drawTear(ctx,W,H,ticket._origData,ticket._tearProg,ticket._tearDir,ticket._jags);
-if(ticket._tearProg>=.85){ticket._dragging=false;cover.style.display='none';ticket.classList.add('tearing')}}
-function onEnd(){ticket._dragging=false;if(ticket._tearProg<.85&&ticket._tearProg>0){ticket._tearProg=0;ctx.putImageData(ticket._origData,0,0)}}
+ticket._tearProg=Math.min(1,dist/(max*.6));drawTear(ctx,W,H,ticket._origData,ticket._tearProg,ticket._tearDir,ticket._jags);
+// Partial reveal opacity effect
+cover.style.opacity=Math.max(0,1-ticket._tearProg*0.3);
+if(ticket._tearProg>=.75){ticket._dragging=false;animateTearFinish(ticket,cover,ctx,W,H)}}
+function onEnd(){ticket._dragging=false;if(ticket._tearProg<.75&&ticket._tearProg>0){ticket._tearProg=0;cover.style.opacity=1;ctx.putImageData(ticket._origData,0,0)}}
 canvas.addEventListener('mousedown',onStart);canvas.addEventListener('mousemove',onMove);canvas.addEventListener('mouseup',onEnd);canvas.addEventListener('mouseleave',onEnd);
 canvas.addEventListener('touchstart',onStart,{passive:false});canvas.addEventListener('touchmove',onMove,{passive:false});canvas.addEventListener('touchend',onEnd)}
 
-function drawTear(ctx,W,H,orig,prog,dir,jags){ctx.clearRect(0,0,W,H);if(prog>=.85)return;ctx.save();ctx.beginPath();const n=jags.length;
-if(dir==='right'){const tx=prog*W;for(let i=0;i<n;i++)ctx.lineTo(tx+jags[i],(i/(n-1))*H);ctx.lineTo(W,H);ctx.lineTo(W,0)}
-else if(dir==='left'){const tx=(1-prog)*W;for(let i=0;i<n;i++)ctx.lineTo(tx-jags[i],(i/(n-1))*H);ctx.lineTo(0,H);ctx.lineTo(0,0)}
-else if(dir==='down'){const ty=prog*H;for(let i=0;i<n;i++)ctx.lineTo((i/(n-1))*W,ty+jags[i]);ctx.lineTo(W,H);ctx.lineTo(0,H)}
-else{const ty=(1-prog)*H;for(let i=0;i<n;i++)ctx.lineTo((i/(n-1))*W,ty-jags[i]);ctx.lineTo(W,0);ctx.lineTo(0,0)}
-ctx.closePath();ctx.clip();ctx.putImageData(orig,0,0);ctx.restore()}
+function animateTearFinish(ticket,cover,ctx,W,H){let prog=ticket._tearProg;const dir=ticket._tearDir;const jags=ticket._jags;
+function step(){prog+=0.04;if(prog>=1){cover.style.transition='opacity .3s';cover.style.opacity='0';setTimeout(()=>{cover.style.display='none';ticket.classList.remove('bought');ticket.classList.add('drawn');if(ticket._prize)showResult(ticket._prize,S.user);loadGame(location.hash.split('/').pop(),'kuji')},300);return}
+drawTear(ctx,W,H,ticket._origData,prog,dir,jags);cover.style.opacity=Math.max(0,1-prog*0.5);requestAnimationFrame(step)}
+requestAnimationFrame(step)}
 
-function startTear(idx,sh){// Mark ticket as being torn, API call in background
-S.tearingIdx=idx;const ticket=document.querySelector(`.ticket[data-idx="${idx}"]`);if(ticket)ticket.classList.add('tearing');
-// Also make API call
-doSingleDraw(idx,sh)}
+function drawTear(ctx,W,H,orig,prog,dir,jags){ctx.clearRect(0,0,W,H);if(prog>=1)return;ctx.save();ctx.beginPath();const n=jags.length;
+if(dir==='right'){const tx=prog*W;for(let i=0;i<n;i++)ctx.lineTo(tx+jags[i]*(1+prog),(i/(n-1))*H);ctx.lineTo(W,H);ctx.lineTo(W,0)}
+else if(dir==='left'){const tx=(1-prog)*W;for(let i=0;i<n;i++)ctx.lineTo(tx-jags[i]*(1+prog),(i/(n-1))*H);ctx.lineTo(0,H);ctx.lineTo(0,0)}
+else if(dir==='down'){const ty=prog*H;for(let i=0;i<n;i++)ctx.lineTo((i/(n-1))*W,ty+jags[i]*(1+prog));ctx.lineTo(W,H);ctx.lineTo(0,H)}
+else{const ty=(1-prog)*H;for(let i=0;i<n;i++)ctx.lineTo((i/(n-1))*W,ty-jags[i]*(1+prog));ctx.lineTo(W,0);ctx.lineTo(0,0)}
+ctx.closePath();ctx.clip();ctx.putImageData(orig,0,0);
+// Shadow along tear edge
+ctx.globalAlpha=0.15;ctx.fillStyle='#000';
+if(dir==='right')ctx.fillRect(prog*W-8,0,8,H);
+else if(dir==='left')ctx.fillRect((1-prog)*W,0,8,H);
+else if(dir==='down')ctx.fillRect(0,prog*H-8,W,8);
+else ctx.fillRect(0,(1-prog)*H,W,8);
+ctx.restore()}
 
-function instantReveal(idx,sh){const player=$('kj-player').value.trim();if(!player){toast('請輸入名字','error');return}
-const ticket=document.querySelector(`.ticket[data-idx="${idx}"]`);if(!ticket)return;const cover=ticket.querySelector('.ticket-cover');if(cover)cover.style.display='none';doSingleDraw(idx,sh)}
+function instantReveal(idx,sh){if(!S.user){toast('請先登入','error');return}
+const ticket=document.querySelector(`.ticket[data-idx="${idx}"]`);if(!ticket || !ticket.classList.contains('bought'))return;
+const cover=ticket.querySelector('.ticket-cover');if(cover){cover.style.transition='opacity .4s';cover.style.opacity='0';setTimeout(()=>{cover.style.display='none';ticket.classList.remove('bought');ticket.classList.add('drawn');if(ticket._prize){showResult(ticket._prize,S.user);loadGame(sh,'kuji')}},400)}}
 
-async function doSingleDraw(idx,sh){const player=$('kj-player').value.trim();showLoading();try{
-const r=await api('drawPrize',{sheetName:sh,playerName:player,ticketIndices:JSON.stringify([idx])});hideLoading();
-if(r.results&&r.results[0]){const res=r.results[0];if(res.success){setTimeout(()=>{showResult(res.prize,player);loadGame(sh,'kuji')},600)}else{toast(res.error||'已被抽走','error');loadGame(sh,'kuji')}}else{toast(r.error||'抽獎失敗','error');loadGame(sh,'kuji')}}catch(e){hideLoading();toast('連線失敗','error')}}
+async function doSingleDraw(idx,sh){const player=S.user;if(!player){toast('請先登入','error');return}
+const item=S.curItems[idx];const tnum=item['編號']??item['號碼']??Object.values(item)[0];
+showLoading();try{
+const r=await api('drawPrize',{sheetName:sh,playerName:player,ticketNumbers:JSON.stringify([tnum])});hideLoading();
+if(r.results&&Array.isArray(r.results)&&r.results.length>0){const res=r.results[0];if(res.success){
+const t=document.querySelector(`.ticket[data-idx="${idx}"]`);
+if(t){t.classList.add('bought');t._prize=res.prize;const hint=t.querySelector('.tear-hint');if(hint){hint.innerHTML='👆 請滑動撕開！';hint.style.color='#ffd700';hint.style.fontWeight='bold';hint.style.opacity='1';}toast('購買成功！請滑動撕開獎券','success');}
+}else{toast(res.error||'已被抽走','error');loadGame(sh,'kuji')}}
+else if(r.error){toast(r.error,'error');loadGame(sh,'kuji')}
+else{toast('回應格式異常','error');loadGame(sh,'kuji')}}catch(e){hideLoading();toast('連線失敗: '+e.message,'error');loadGame(sh,'kuji')}}
 
 async function doMultiDraw(indices,sh,player){showLoading();try{
-const r=await api('drawPrize',{sheetName:sh,playerName:player,ticketIndices:JSON.stringify(indices)});hideLoading();
+const ticketNums=indices.map(i=>{const it=S.curItems[i];return it['編號']??it['號碼']??Object.values(it)[0]});
+const r=await api('drawPrize',{sheetName:sh,playerName:player,ticketNumbers:JSON.stringify(ticketNums)});hideLoading();
 if(r.results){const ok=r.results.filter(x=>x.success);const fail=r.results.filter(x=>!x.success);
 if(fail.length)fail.forEach(f=>toast(f.error,'error'));
 if(ok.length){showMultiResult(ok.map(x=>x.prize),player)}
@@ -562,13 +624,30 @@ function clearSelection(){S.selected=[];document.querySelectorAll('.ticket').for
 
 // ═══ SCRATCH GAME ═══
 function rScratch(sh){const a=S.curAct;$('sc-title').textContent=a.name;$('sc-meta').textContent=`已刮 ${a.drawn}/${a.total}`;
+$('sc-player-info').innerHTML=`<i class="fas fa-user"></i> 抽獎者：${S.user}`;
+const sp=+a.singlePrice,mc=+a.multiCount,mp=+a.multiPrice,rem=(+a.total)-(+a.drawn);
+let ph='<div class="draw-mode-selector"><span class="dms-label">🎰 選取模式：</span>';
+ph+=`<button class="dms-btn ${S.drawMode==='single'?'sel':''}" onclick="setScMode('single','${sh}')">單次刮開${sp?`<span class="dms-price">${sp}元</span>`:''}</button>`;
+if(mc&&mc>0&&rem>=mc) ph+=`<button class="dms-btn ${S.drawMode==='multi'?'sel':''}" onclick="setScMode('multi','${sh}')">${mc} 次大量刮開${mp?`<span class="dms-price">${mp}元</span>`:''}</button>`;
+ph+='</div>';$('sc-price').innerHTML=ph;
 const bg=a.hasBigPrize;$('sc-banner').innerHTML=`<div class="big-banner ${bg==='有'?'has':'gone'}">${bg==='有'?'🏆 大獎尚在！':'😢 大獎已出...'}</div>`;
+$('sc-drawbar').style.display=(S.drawMode==='multi')?'flex':'none';
 const items=S.curItems;const t=items.length;const cls=t<=20?'g20':t<=40?'g40':t<=80?'g80':'g100';
 let h=`<div class="scratch-grid ${cls}">`;items.forEach(it=>{const n=it['號碼'],sc=it['狀態']==='已刮',lv=it['獎項等級'],c=pColor(lv);
 if(sc)h+=`<div class="scratch-card revealed"><div class="card-bg" style="background:${c}"><div class="sc-num">#${n}</div><div class="sc-prize">${lv}</div></div></div>`;
-else h+=`<div class="scratch-card" data-num="${n}" data-sheet="${sh}"><div class="card-bg" style="background:${c}"><div class="sc-num">#${n}</div><div class="sc-prize">${lv}</div></div><canvas></canvas></div>`});
+else h+=`<div class="scratch-card ${S.selected.includes(String(n))?'selected':''}" data-num="${n}" data-sheet="${sh}"><div class="card-bg" style="background:${c}"><div class="sc-num">#${n}</div><div class="sc-prize">${lv}</div></div><canvas></canvas></div>`});
 h+='</div>';$('sc-grid-wrap').innerHTML=h;
-document.querySelectorAll('.scratch-card:not(.revealed)').forEach(initScratchCanvas);rPanel(S.curStats,'sc-panel')}
+document.querySelectorAll('.scratch-card:not(.revealed)').forEach(initScratchCanvas);rPanel(S.curStats,'sc-panel');updScDrawBar()}
+
+function setScMode(m,sh){S.drawMode=m;S.selected=[];const rem=(+S.curAct.total)-(+S.curAct.drawn);
+document.querySelectorAll('.draw-mode-selector .dms-btn').forEach(d=>d.classList.remove('sel'));
+if(m==='single'){document.querySelectorAll('.draw-mode-selector .dms-btn')[0]?.classList.add('sel');$('sc-drawbar').style.display='none'}
+else{const btns=document.querySelectorAll('.draw-mode-selector .dms-btn');if(btns[1])btns[1].classList.add('sel');if(rem<S.multiN){toast(`剩餘${rem}張，不足${S.multiN}抽`,'error');setScMode('single',sh);return}$('sc-drawbar').style.display='flex'}
+document.querySelectorAll('.scratch-card').forEach(t=>t.classList.remove('selected'));updScDrawBar()}
+
+function updScDrawBar(){$('sc-sel-ct').textContent=`已選 ${S.selected.length}/${S.drawMode==='multi'?S.multiN:1} 張`;$('sc-draw-btn').disabled=S.selected.length<(S.drawMode==='multi'?S.multiN:1)}
+
+function clearScratchSelection(){S.selected=[];document.querySelectorAll('.scratch-card').forEach(t=>t.classList.remove('selected'));updScDrawBar()}
 
 function initScratchCanvas(card){const canvas=card.querySelector('canvas');const rect=card.getBoundingClientRect();canvas.width=rect.width||80;canvas.height=rect.height||80;const ctx=canvas.getContext('2d');
 const g=ctx.createLinearGradient(0,0,canvas.width,canvas.height);g.addColorStop(0,'#b0b0b0');g.addColorStop(.3,'#d8d8d8');g.addColorStop(.5,'#a0a0a0');g.addColorStop(1,'#b0b0b0');ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -576,22 +655,49 @@ ctx.fillStyle='rgba(0,0,0,.25)';ctx.font=`bold ${Math.min(canvas.width,canvas.he
 ctx.strokeStyle='rgba(255,255,255,.08)';for(let i=-canvas.height;i<canvas.width;i+=8){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+canvas.height,canvas.height);ctx.stroke()}
 let isDown=false,scr=0;const tot=canvas.width*canvas.height;const br=Math.min(canvas.width,canvas.height)*.15;
 function scrAt(x,y){ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x,y,br,0,Math.PI*2);ctx.fill();scr+=Math.PI*br*br;if(scr/tot>.45)revealCard(card)}
-canvas.addEventListener('mousedown',e=>{isDown=true;const r=canvas.getBoundingClientRect();scrAt(e.clientX-r.left,e.clientY-r.top)});
+function evGuard(e){
+  if(S.drawMode==='multi'){
+    e.preventDefault();
+    const n = card.dataset.num; const si=S.selected.indexOf(String(n));
+    if(si>=0){S.selected.splice(si,1);card.classList.remove('selected')}
+    else{if(S.selected.length>=S.multiN){toast(`最多選${S.multiN}張`,'info');return}S.selected.push(String(n));card.classList.add('selected')}
+    updScDrawBar();return true;
+  }
+  return false;
+}
+canvas.addEventListener('mousedown',e=>{if(evGuard(e))return;isDown=true;const r=canvas.getBoundingClientRect();scrAt(e.clientX-r.left,e.clientY-r.top)});
 canvas.addEventListener('mousemove',e=>{if(!isDown)return;const r=canvas.getBoundingClientRect();scrAt(e.clientX-r.left,e.clientY-r.top)});
 canvas.addEventListener('mouseup',()=>isDown=false);canvas.addEventListener('mouseleave',()=>isDown=false);
-canvas.addEventListener('touchstart',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();scrAt(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top)},{passive:false});
-canvas.addEventListener('touchmove',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();scrAt(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top)},{passive:false})}
+canvas.addEventListener('touchstart',e=>{if(evGuard(e))return;e.preventDefault();const r=canvas.getBoundingClientRect();scrAt(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top)},{passive:false});
+canvas.addEventListener('touchmove',e=>{if(S.drawMode==='multi')return;e.preventDefault();const r=canvas.getBoundingClientRect();scrAt(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top)},{passive:false})}
 
-async function revealCard(card){if(card.classList.contains('revealed'))return;const player=$('sc-player').value.trim();if(!player){toast('請先輸入名字','error');return}card.classList.add('revealed');
-showLoading();try{const r=await api('scratchNumber',{sheetName:card.dataset.sheet,number:parseInt(card.dataset.num),playerName:player});hideLoading();if(r.success){showResult(r.prize,player);loadGame(card.dataset.sheet,'scratch')}else{card.classList.remove('revealed');toast(r.error,'error')}}catch(e){hideLoading();card.classList.remove('revealed');toast('連線失敗','error')}}
+async function revealCard(card){if(card.classList.contains('revealed'))return;if(!S.user){toast('請先登入','error');return}const player=S.user;card.classList.add('revealed');
+showLoading();try{const r=await api('scratchNumber',{sheetName:card.dataset.sheet,numberList:JSON.stringify([parseInt(card.dataset.num)]),playerName:player});hideLoading();if(r.success){showResult(r.results[0].prize,player);loadGame(card.dataset.sheet,'scratch')}else{card.classList.remove('revealed');toast(r.results[0].error||'失敗','error')}}catch(e){hideLoading();card.classList.remove('revealed');toast('連線失敗','error')}}
+
+function confirmScratch(){if(!S.user){toast('請先登入','error');return}const player=S.user;
+const sh=location.hash.split('/').pop();const nums=S.selected.join(', ');
+$('draw-cf-content').innerHTML=`<p>確定購買 <b style="color:var(--gold)">${nums}</b> 號？</p><p style="font-size:.85rem;color:var(--txt2);margin-top:6px">共 ${S.selected.length} 張，確認後系統直接開獎</p>`;
+$('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doMultiScratchBuy(S.selected,sh,player)};showModal('m-draw-cf')}
+
+async function doMultiScratchBuy(nums,sh,player){showLoading();try{
+const r=await api('scratchNumber',{sheetName:sh,numberList:JSON.stringify(nums),playerName:player});hideLoading();
+if(r.results){const ok=r.results.filter(x=>x.success);const fail=r.results.filter(x=>!x.success);
+if(fail.length)fail.forEach(f=>toast(f.error,'error'));
+if(ok.length){showMultiResult(ok.map(x=>x.prize),player)}
+loadGame(sh,'scratch')}else{toast(r.error||'失敗','error')}}catch(e){hideLoading();toast('連線失敗','error')}}
 
 // ═══ RESULT ═══
 function showResult(prize,player){const big=['A賞','B賞'].includes(prize.level);const c=pColor(prize.level);
-$('res-content').innerHTML=`<div class="pop-in"><div style="font-size:.95rem;color:var(--txt3);margin-bottom:6px">${big?'🎉 恭喜中大獎！🎉':'🎊 恭喜！'}</div><div class="rl" style="color:${c}">${prize.level}</div><div class="rn">${prize.name}</div>${prize.description?`<div class="rd">${prize.description}</div>`:''}<div class="rp"><i class="fas fa-user"></i> ${player}</div></div>`;
+$('res-content').innerHTML=`<div class="pop-in"><div style="font-size:.95rem;color:var(--txt3);margin-bottom:6px">${big?'🎉 恭喜中大獎！🎉':'🎊 恭喜！'}</div>
+${prize.imageUrl?`<img src="${prize.imageUrl}" class="prize-res-img" onerror="this.style.display='none'">`:''}
+<div class="rl" style="color:${c}">${prize.level}</div><div class="rn">${prize.name}</div>${prize.description?`<div class="rd">${prize.description}</div>`:''}<div class="rp"><i class="fas fa-user"></i> ${player}</div></div>`;
 showModal('m-result');if(big)startConfetti()}
+
 function showMultiResult(prizes,player){const big=prizes.some(p=>['A賞','B賞'].includes(p.level));
 let h=`<div style="font-size:.95rem;color:var(--txt3);margin-bottom:14px">${big?'🎉 恭喜！中大獎了！':'🎊 抽獎結果'}</div><div class="multi-results">`;
-prizes.forEach(p=>{const c=pColor(p.level);h+=`<div class="mr-item"><div class="mr-lv" style="color:${c}">${p.level}</div><div class="mr-nm">${p.name}</div></div>`});
+prizes.forEach(p=>{const c=pColor(p.level);h+=`<div class="mr-item">
+${p.imageUrl?`<img src="${p.imageUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;background:rgba(0,0,0,.2)" onerror="this.style.display='none'">`:''}
+<div class="mr-lv" style="color:${c}">${p.level}</div><div class="mr-nm">${p.name}</div></div>`});
 h+=`</div><div class="rp" style="margin-top:12px"><i class="fas fa-user"></i> ${player}</div>`;
 $('res-content').innerHTML=h;showModal('m-result');if(big)startConfetti()}
 function closeResult(){closeModal('m-result');stopConfetti()}
