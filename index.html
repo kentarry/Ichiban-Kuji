@@ -106,16 +106,17 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 .big-banner.has{background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(255,215,0,.04));border:1px solid rgba(255,215,0,.25);color:var(--gold)}
 .big-banner.gone{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);color:var(--danger)}
 .draw-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);border-radius:var(--r);margin:10px 0;flex-wrap:wrap}
-.draw-bar .sel-count{color:var(--gold);font-weight:700;font-size:.9rem}
-.tickets-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;padding:16px}
-.ticket{position:relative;cursor:pointer;user-select:none;touch-action:none}
-.ticket-inner{position:relative;height:150px;border-radius:12px;overflow:hidden}
+.draw-bar .sel-count{color:var(--gold);font-weight:700;font-size:1rem}
+.tickets-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:15px;padding:20px}
+.ticket{position:relative;cursor:pointer;user-select:none;touch-action:none;transition:transform .2s}
+.ticket:hover{transform:scale(1.02)}
+.ticket-inner{position:relative;height:210px;border-radius:14px;overflow:hidden;box-shadow:0 8px 25px rgba(0,0,0,.3)}
 .ticket.drawn{pointer-events:none;opacity:.35}
 .ticket.selected .ticket-inner{box-shadow:0 0 0 3px var(--gold),0 0 20px rgba(255,215,0,.3)}
 .ticket-prize{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px}
-.ticket-prize .tp-lv{font-size:1.5rem;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5)}
-.ticket-prize .tp-nm{font-size:.65rem;color:rgba(255,255,255,.8);margin-top:4px}
-.ticket-prize .tp-who{font-size:.55rem;color:rgba(255,255,255,.5);margin-top:6px}
+.ticket-prize .tp-lv{font-size:2.2rem;font-weight:900;color:#fff;text-shadow:0 3px 12px rgba(0,0,0,.6)}
+.ticket-prize .tp-nm{font-size:.85rem;color:rgba(255,255,255,.9);margin-top:6px;font-weight:500;padding:0 10px;text-align:center}
+.ticket-prize .tp-who{font-size:.65rem;color:rgba(255,255,255,.6);margin-top:8px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:10px}
 .ticket-cover{position:absolute;inset:0;border-radius:12px;overflow:hidden;cursor:grab;transition:opacity .5s}
 .ticket-cover:active{cursor:grabbing}
 .ticket-cover canvas{width:100%;height:100%;display:block}
@@ -146,8 +147,28 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 .detail-hero-img { width:100%; max-width:480px; height:220px; object-fit:cover; border-radius:20px; margin:0 auto 24px auto; display:block; box-shadow:0 12px 40px rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.1) }
 .dp-img { width:100%; height:90px; object-fit:cover; border-radius:10px; margin-bottom:10px; background:rgba(0,0,0,.15) }
 .ticket:not(.bought) .ticket-cover canvas { pointer-events: none }
-.ticket.bought { animation: pulseBorder 1.5s infinite; }
+.ticket.bought { animation: pulseBorder 1.5s infinite; transform: scale(1.05); z-index: 10; }
+@keyframes pulseBorder { 0%, 100% { box-shadow: 0 0 0 4px var(--gold), 0 0 30px rgba(255,215,0,0.4); } 50% { box-shadow: 0 0 0 6px var(--gold), 0 0 50px rgba(255,215,0,0.6); } }
 .ticket.bought .ticket-cover { pointer-events: auto; }
+
+/* Responsive / Mobile Adaptation */
+@media (max-width: 900px) {
+  .game-layout { grid-template-columns: 1fr; }
+  .prize-panel { position: static; margin-top: 30px; }
+}
+@media (max-width: 600px) {
+  .container { padding: 12px; }
+  .header { padding: 0 15px; height: 55px; }
+  .logo { font-size: 1rem; }
+  .btn { padding: 6px 12px; font-size: .8rem; }
+  .page-title { font-size: 1.2rem; }
+  .tickets-board { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding: 10px; }
+  .ticket-inner { height: 190px; }
+  .activity-grid { grid-template-columns: 1fr; }
+  .result-modal { padding: 30px 20px; }
+  .result-modal .rl { font-size: 2.2rem; }
+  .result-modal .rn { font-size: 1.1rem; }
+}
 .ticket.bought .ticket-inner { box-shadow: 0 0 20px var(--gold); }
 .ticket.bought .instant-btn { display:block; animation:fadeIn .3s; }
 @keyframes pulseBorder { 0% { box-shadow: 0 0 0 0px var(--gold); } 50% { box-shadow: 0 0 0 4px var(--gold); } 100% { box-shadow: 0 0 0 0px var(--gold); } }
@@ -526,7 +547,8 @@ const si=S.selected.indexOf(idx);if(si>=0){S.selected.splice(si,1);document.quer
 else{if(S.selected.length>=S.multiN){toast(`最多選${S.multiN}張`,'info');return}S.selected.push(idx);document.querySelector(`.ticket[data-idx="${idx}"]`)?.classList.add('selected')}updDrawBar()}}
 
 function confirmDraw(){if(!S.user){toast('請先登入','error');return}const player=S.user;
-const sh=location.hash.split('/').pop();const nums=S.selected.map(i=>{const it=S.curItems[i];const n=it['編號']??it['號碼']??Object.values(it)[0];return '#'+String(n).padStart(2,'0')}).join(', ');
+const sh=S.curAct.sheetName;
+const nums=S.selected.map(i=>{const it=S.curItems[i];const n=it['編號']??it['號碼']??Object.values(it)[0];return '#'+String(n).padStart(2,'0')}).join(', ');
 $('draw-cf-content').innerHTML=`<p>確定抽取 <b style="color:var(--gold)">${nums}</b>？</p><p style="font-size:.85rem;color:var(--txt2);margin-top:6px">共 ${S.selected.length} 張</p>`;
 $('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doMultiDraw(S.selected,sh,player)};showModal('m-draw-cf')}
 
@@ -579,7 +601,7 @@ canvas.addEventListener('mousedown',onStart);canvas.addEventListener('mousemove'
 canvas.addEventListener('touchstart',onStart,{passive:false});canvas.addEventListener('touchmove',onMove,{passive:false});canvas.addEventListener('touchend',onEnd)}
 
 function animateTearFinish(ticket,cover,ctx,W,H){let prog=ticket._tearProg;const dir=ticket._tearDir;const jags=ticket._jags;
-function step(){prog+=0.04;if(prog>=1){cover.style.transition='opacity .3s';cover.style.opacity='0';setTimeout(()=>{cover.style.display='none';ticket.classList.remove('bought');ticket.classList.add('drawn');if(ticket._prize)showResult(ticket._prize,S.user);loadGame(location.hash.split('/').pop(),'kuji')},300);return}
+function step(){prog+=0.04;if(prog>=1){cover.style.transition='opacity .3s';cover.style.opacity='0';setTimeout(()=>{cover.style.display='none';ticket.classList.remove('bought');ticket.classList.add('drawn');if(ticket._prize)showResult(ticket._prize,S.user);loadGame(S.curAct.sheetName,'kuji')},300);return}
 drawTear(ctx,W,H,ticket._origData,prog,dir,jags);cover.style.opacity=Math.max(0,1-prog*0.5);requestAnimationFrame(step)}
 requestAnimationFrame(step)}
 
@@ -675,7 +697,7 @@ async function revealCard(card){if(card.classList.contains('revealed'))return;if
 showLoading();try{const r=await api('scratchNumber',{sheetName:card.dataset.sheet,numberList:JSON.stringify([parseInt(card.dataset.num)]),playerName:player});hideLoading();if(r.success){showResult(r.results[0].prize,player);loadGame(card.dataset.sheet,'scratch')}else{card.classList.remove('revealed');toast(r.results[0].error||'失敗','error')}}catch(e){hideLoading();card.classList.remove('revealed');toast('連線失敗','error')}}
 
 function confirmScratch(){if(!S.user){toast('請先登入','error');return}const player=S.user;
-const sh=location.hash.split('/').pop();const nums=S.selected.join(', ');
+const sh=S.curAct.sheetName; const nums=S.selected.join(', ');
 $('draw-cf-content').innerHTML=`<p>確定購買 <b style="color:var(--gold)">${nums}</b> 號？</p><p style="font-size:.85rem;color:var(--txt2);margin-top:6px">共 ${S.selected.length} 張，確認後系統直接開獎</p>`;
 $('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doMultiScratchBuy(S.selected,sh,player)};showModal('m-draw-cf')}
 
