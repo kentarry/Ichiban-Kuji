@@ -200,7 +200,25 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
 @keyframes popIn{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.12) rotate(2deg)}100%{transform:scale(1) rotate(0)}}
 .pop-in{animation:popIn .5s cubic-bezier(.175,.885,.32,1.275)}
 .mode-toggle{display:flex;gap:0;margin-bottom:14px}.mode-toggle button{flex:1;padding:8px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:var(--txt2);font-family:var(--font);cursor:pointer;font-size:.82rem;transition:all .2s}.mode-toggle button:first-child{border-radius:var(--r) 0 0 var(--r)}.mode-toggle button:last-child{border-radius:0 var(--r) var(--r) 0}.mode-toggle button.active{background:rgba(255,215,0,.1);color:var(--gold);border-color:var(--gold)}
-@media(max-width:768px){.container{padding:14px}.game-layout{grid-template-columns:1fr}.activity-grid{grid-template-columns:1fr}.painter{flex-direction:column}.tickets-board{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;padding:10px}.ticket-inner{height:120px}.detail-hero h1{font-size:1.3rem}}
+@media(max-width:768px){.painter{flex-direction:column}.detail-hero h1{font-size:1.3rem}}
+/* ═══ TEAR OVERLAY ═══ */
+.tear-overlay{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s}
+.tear-overlay.show{display:flex}
+.tear-ov-hdr{text-align:center;margin-bottom:16px;color:var(--txt2);font-size:.9rem}
+.tear-ov-hdr .tear-num{font-size:2rem;font-weight:900;color:var(--gold);display:block;margin-bottom:4px;text-shadow:0 0 30px rgba(255,215,0,.4)}
+.tear-ov-hdr .tear-progress{color:var(--txt3);font-size:.8rem;margin-top:6px}
+.tear-ov-wrap{position:relative;width:min(320px,85vw);height:min(440px,60vh);border-radius:18px;overflow:hidden;box-shadow:0 20px 80px rgba(255,215,0,.15),0 0 0 2px rgba(255,215,0,.2)}
+.tear-ov-wrap canvas{width:100%;height:100%;display:block;cursor:grab}
+.tear-ov-wrap canvas:active{cursor:grabbing}
+.tear-ov-prize{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;z-index:0}
+.tear-ov-prize .tov-lv{font-size:3.5rem;font-weight:900;text-shadow:0 4px 20px rgba(0,0,0,.6)}
+.tear-ov-prize .tov-nm{font-size:1.2rem;font-weight:600;color:rgba(255,255,255,.9);margin-top:8px;text-align:center;padding:0 20px}
+.tear-ov-prize .tov-img{width:80%;max-width:200px;max-height:140px;object-fit:cover;border-radius:12px;margin-top:12px;box-shadow:0 4px 15px rgba(0,0,0,.4)}
+.tear-ov-actions{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.tear-ov-hint{color:rgba(255,215,0,.6);font-size:.85rem;margin-top:10px;animation:hintPulse 2s ease-in-out infinite;text-align:center}
+/* Pending draws notification */
+.pending-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:180;background:linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.05));border:1px solid rgba(255,215,0,.3);border-radius:16px;padding:14px 24px;backdrop-filter:blur(10px);display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:slideUp .5s}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 </style>
 </head>
 <body>
@@ -369,13 +387,30 @@ select.form-input option{background:var(--bg2);color:var(--txt)}
   <div style="display:flex;gap:8px;justify-content:center"><button class="btn btn-outline" onclick="closeModal('m-draw-cf')">取消重選</button><button class="btn btn-gold" id="draw-cf-ok">確定抽獎！</button></div>
 </div></div>
 
+<div class="tear-overlay" id="m-tear-ov">
+  <div class="tear-ov-hdr">
+    <span class="tear-num" id="tov-num">#01</span>
+    <span>請用手指或滑鼠撕開獎券</span>
+    <div class="tear-progress" id="tov-progress" style="display:none"></div>
+  </div>
+  <div class="tear-ov-wrap">
+    <div class="tear-ov-prize" id="tov-prize"></div>
+    <canvas id="tov-canvas"></canvas>
+  </div>
+  <div class="tear-ov-hint" id="tov-hint">👆 從任意方向滑動撕開！必須完全撕開才能開獎</div>
+  <div class="tear-ov-actions" id="tov-actions">
+    <button class="btn btn-gold" onclick="skipCurrentReveal()" id="tov-skip-btn">⚡ 直接開獎</button>
+    <button class="btn btn-outline" onclick="skipAllReveals()" id="tov-skip-all" style="display:none">⚡ 全部立即兌獎</button>
+  </div>
+</div>
+
 <script>
 
 const GK='ichiban_gas_url';
 const DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycbzz4VWdv3JRVB3kWkcA6vFRgBavA05p_tOl8PpbqUMVdfYc6VloKqkIHdBsehXRr2TooQ/exec';
 function gasUrl(){return localStorage.getItem(GK)||DEFAULT_GAS_URL}
 async function api(action,p={}){const u=gasUrl();if(!u)throw new Error('未設定API');const r=await fetch(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...p}),redirect:'follow'});const txt=await r.text();try{return JSON.parse(txt)}catch(e){console.error('API非JSON回應:',txt.substring(0,500));throw new Error('伺服器忙碌中，請稍後再試。連線逾時或暫時無法存取。')}}
-const S={user:null,acts:[],curAct:null,curItems:[],curStats:[],drawMode:'single',multiN:5,selected:[],tearingIdx:null,pendingGame:null,
+const S={user:null,acts:[],curAct:null,curItems:[],curStats:[],drawMode:'single',multiN:5,selected:[],tearingIdx:null,pendingGame:null,multiQueue:[],revealIdx:0,
 wiz:{step:1,type:'',name:'',pwd:'',imageUrl:'',prizes:[],numbers:[],mode:'random',totalNums:20,manualP:[],paintSel:null,asgn:{},scratchP:[],singlePrice:80,multiCount:5,multiPrice:350,totalTickets:80}};
 const PC={'A賞':'#ffd700','B賞':'#c0c0c0','C賞':'#e88fa5','D賞':'#a855f7','F賞':'#3b82f6','G賞':'#22c55e','H賞':'#14b8a6'};
 const PL=['A賞','B賞','C賞','D賞','F賞','G賞','H賞'];
@@ -397,7 +432,7 @@ function saveGas(){const u=$('gas-url').value.trim();if(!u){toast('請輸入網�
 
 // ═══ AUTH ═══
 function authTab(t){$('auth-login').style.display=t==='login'?'':'none';$('auth-reg').style.display=t==='reg'?'':'none';$('tab-login').className='btn '+(t==='login'?'btn-gold':'btn-outline')+' btn-sm';$('tab-reg').className='btn '+(t==='reg'?'btn-gold':'btn-outline')+' btn-sm'}
-async function doLogin(){const u=$('a-user').value.trim(),p=$('a-pass').value.trim();if(!u||!p){toast('請填寫','error');return}showLoading();try{const r=await api('login',{username:u,password:p});hideLoading();if(r.success){S.user=r.username;closeModal('m-auth');updUIAuth();toast('登入成功！','success');if(S.pendingGame){const p = S.pendingGame; S.pendingGame=null; enterGame(p.type, p.sheet);}else{R.go('my')}}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗: '+e.message,'error')}}
+async function doLogin(){const u=$('a-user').value.trim(),p=$('a-pass').value.trim();if(!u||!p){toast('請填寫','error');return}showLoading();try{const r=await api('login',{username:u,password:p});hideLoading();if(r.success){S.user=r.username;closeModal('m-auth');updUIAuth();toast('登入成功！','success');if(S.pendingGame){const p = S.pendingGame; S.pendingGame=null; enterGame(p.type, p.sheet);}else{checkPendingDraws();R.go('my')}}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗: '+e.message,'error')}}
 async function doRegister(){const u=$('r-user').value.trim(),p=$('r-pass').value.trim();if(!u||!p){toast('請填寫','error');return}if(p.length<4){toast('密碼至少4字元','error');return}showLoading();try{const r=await api('register',{username:u,password:p});hideLoading();if(r.success){toast('註冊成功','success');authTab('login')}else toast(r.error,'error')}catch(e){hideLoading();toast('連線失敗','error')}}
 function logout(){S.user=null;updUIAuth();toast('已登出','info');R.go('home')}
 function updUIAuth(){if(S.user){$('btn-login').style.display='none';$('btn-logout').style.display='';$('user-info').style.display='';$('user-info').innerHTML='<i class="fas fa-user"></i> '+S.user;$('user-info').onclick=()=>R.go('my')}else{$('btn-login').style.display='';$('btn-logout').style.display='none';$('user-info').style.display='none'}}
@@ -520,10 +555,8 @@ function getTicketNum(item){return item['編號'] ?? item['號碼'] ?? Object.va
 $('kj-board').innerHTML=items.map(it=>{const drawn=it['狀態']==='已抽';const lv=it['獎項等級'];const c=pColor(lv);const idx=it.origIdx;const sel=S.selected.includes(idx);const tnum=getTicketNum(it);
 return`<div class="ticket ${drawn?'drawn':''} ${sel?'selected':''}" data-idx="${idx}" data-num="${tnum}" onclick="onTicketClick(${idx},'${sh}')">
 <div class="ticket-inner"><div class="ticket-prize" style="background:linear-gradient(135deg,${c},${c}88)"><div class="tp-lv">${lv}</div><div class="tp-nm">${it['獎品名稱']}</div>${drawn?`<div class="tp-who"><i class="fas fa-user"></i> ${it['抽獎者']}</div>`:''}</div>
-${drawn?'':`<div class="ticket-cover"><canvas></canvas><div class="tear-hint">👆 拖曳撕開</div></div><button class="instant-btn" onclick="event.stopPropagation();instantReveal(${idx},'${sh}')">⚡ 直接開獎</button>`}
+${drawn?'':`<div class="ticket-cover" style="background:linear-gradient(135deg,#A0855C,#D4AF61,#B8942F);display:flex;align-items:center;justify-content:center;flex-direction:column"><div style="font-size:1.8rem;font-weight:900;color:rgba(0,0,0,.3)">#${String(tnum).padStart(2,'0')}</div><div style="font-size:.7rem;color:rgba(0,0,0,.2);margin-top:4px">點擊抽獎</div></div>`}
 </div></div>`}).join('');
-// Init tear canvases
-document.querySelectorAll('.ticket:not(.drawn)').forEach(initTearCanvas);
 rPanel(S.curStats,'kj-panel');updDrawBar()}
 
 function setDrawMode(m,sh){S.drawMode=m;S.selected=[];const rem=(+S.curAct.total)-(+S.curAct.drawn);
@@ -535,12 +568,10 @@ document.querySelectorAll('.ticket').forEach(t=>t.classList.remove('selected'));
 function updDrawBar(){$('kj-sel-ct').textContent=`已選 ${S.selected.length}/${S.drawMode==='multi'?S.multiN:1} 張`;$('kj-draw-btn').disabled=S.selected.length<(S.drawMode==='multi'?S.multiN:1)}
 
 function onTicketClick(idx,sh){if(!S.user){toast('請先登入','error');return}const player=S.user;
-const ticket=document.querySelector(`.ticket[data-idx="${idx}"]`);
-if(ticket&&ticket.classList.contains('bought'))return;
 const item=S.curItems[idx];if(item['狀態']==='已抽'){toast('此獎券已被抽走','error');return}
 const tnum = item['編號'] ?? item['號碼'] ?? Object.values(item)[0];
 if(S.drawMode==='single'){// Single draw: confirm dialog
-$('draw-cf-content').innerHTML=`<p style="font-size:1.1rem">確定要選擇 <b style="color:var(--gold)">#${String(tnum).padStart(2,'0')}</b> 嗎？</p><p style="font-size:.8rem;margin-top:6px;color:var(--txt3)">確認購買後將解鎖手動撕開功能</p>`;
+$('draw-cf-content').innerHTML=`<p style="font-size:1.1rem">確定要選擇 <b style="color:var(--gold)">#${String(tnum).padStart(2,'0')}</b> 嗎？</p><p style="font-size:.8rem;margin-top:6px;color:var(--txt3)">確認後將進入全螢幕撕獎體驗</p>`;
 $('draw-cf-ok').onclick=()=>{closeModal('m-draw-cf');doSingleDraw(idx,sh)};showModal('m-draw-cf')}
 else{// Multi draw: toggle selection
 const si=S.selected.indexOf(idx);if(si>=0){S.selected.splice(si,1);document.querySelector(`.ticket[data-idx="${idx}"]`)?.classList.remove('selected')}
@@ -619,17 +650,153 @@ else if(dir==='down')ctx.fillRect(0,prog*H-8,W,8);
 else ctx.fillRect(0,(1-prog)*H,W,8);
 ctx.restore()}
 
+// ═══ FULL-SCREEN TEAR OVERLAY ═══
+const PENDING_KEY='ichiban_pending_draws';
+
+function savePendingDraws(sheetName, type, results){
+  const data={user:S.user, sheetName, type, results:results.map((r,i)=>({...r,revealed:false})), timestamp:Date.now()};
+  localStorage.setItem(PENDING_KEY, JSON.stringify(data));
+}
+function loadPendingDraws(){
+  try{const raw=localStorage.getItem(PENDING_KEY);if(!raw)return null;const d=JSON.parse(raw);
+  if(Date.now()-d.timestamp>24*60*60*1000){localStorage.removeItem(PENDING_KEY);return null}return d}catch(e){return null}
+}
+function clearPendingDraws(){localStorage.removeItem(PENDING_KEY)}
+function markRevealed(idx){
+  try{const d=JSON.parse(localStorage.getItem(PENDING_KEY));if(d&&d.results[idx]){d.results[idx].revealed=true;localStorage.setItem(PENDING_KEY,JSON.stringify(d))}}catch(e){}
+}
+
+function openTearOverlay(prize, number, onComplete, queueInfo){
+  const ov=$('m-tear-ov');ov.classList.add('show');
+  $('tov-num').textContent='#'+String(number).padStart(2,'0');
+  $('tov-hint').textContent='👆 從任意方向滑動撕開！必須完全撕開才能開獎';
+  $('tov-hint').style.display='';
+  // Prize layer
+  const c=pColor(prize.level);
+  $('tov-prize').innerHTML=`<div class="tov-lv" style="color:${c}">${prize.level}</div><div class="tov-nm">${prize.name}</div>${prize.imageUrl?`<img src="${prize.imageUrl}" class="tov-img" onerror="this.style.display='none'">`:''}`;
+  // Queue progress
+  if(queueInfo){$('tov-progress').style.display='';$('tov-progress').textContent=`第 ${queueInfo.current} / ${queueInfo.total} 張`;$('tov-skip-all').style.display=''}
+  else{$('tov-progress').style.display='none';$('tov-skip-all').style.display='none'}
+  $('tov-skip-btn').style.display='';
+  // Canvas setup
+  const canvas=$('tov-canvas');const wrap=canvas.parentElement;
+  const W=wrap.clientWidth,H=wrap.clientHeight;canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+  // Gold paper
+  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#A0855C');g.addColorStop(.25,'#D4AF61');g.addColorStop(.5,'#B8942F');g.addColorStop(.75,'#D4B96A');g.addColorStop(1,'#A07D4A');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=0.06;for(let i=0;i<80;i++){ctx.strokeStyle=Math.random()>.5?'#000':'#fff';ctx.lineWidth=Math.random()*1.5;ctx.beginPath();const sx=Math.random()*W,sy=Math.random()*H;ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.random()*20-10,sy+Math.random()*20-10);ctx.stroke()}ctx.globalAlpha=1;
+  ctx.strokeStyle='rgba(0,0,0,.03)';ctx.lineWidth=.5;for(let i=-H;i<W;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}
+  for(let i=0;i<W+H;i+=6){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i-H,H);ctx.stroke()}
+  const numStr=String(number).padStart(2,'0');
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${W*.22}px serif`;
+  ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillText(numStr,W/2+1,H*.28+1);ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillText(numStr,W/2,H*.28);
+  ctx.font=`600 ${W*.08}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillText('一 番 賞',W/2,H*.42);
+  ctx.setLineDash([3,5]);ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(W*.08,H*.52);ctx.lineTo(W*.92,H*.52);ctx.stroke();ctx.setLineDash([]);
+  ctx.font=`${W*.06}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillText('✂ - - - - - - - ✂',W/2,H*.52);
+  ctx.font=`bold ${W*.07}px ${getComputedStyle(document.body).fontFamily}`;ctx.fillStyle='rgba(0,0,0,.22)';ctx.fillText('⬇ 由此撕開 ⬇',W/2,H*.68);
+  const shine=ctx.createLinearGradient(0,0,W,0);shine.addColorStop(0,'rgba(255,255,255,0)');shine.addColorStop(.45,'rgba(255,255,255,0)');shine.addColorStop(.5,'rgba(255,255,255,.08)');shine.addColorStop(.55,'rgba(255,255,255,0)');shine.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=shine;ctx.fillRect(0,0,W,H);
+  const origData=ctx.getImageData(0,0,W,H);
+  const jags=Array.from({length:60},()=>(Math.random()-.5)*10);
+  let tearProg=0,tearDir=null,dragging=false,sx=0,sy=0,revealed=false;
+  // Store completion callback
+  canvas._onComplete=onComplete;canvas._prize=prize;canvas._revealed=false;
+  function onStart(e){if(revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();sx=t.clientX-r.left;sy=t.clientY-r.top;dragging=true;tearDir=null;tearProg=0}
+  function onMove(e){if(!dragging||revealed)return;e.preventDefault();const t=e.touches?e.touches[0]:e;const r=canvas.getBoundingClientRect();const ex=t.clientX-r.left,ey=t.clientY-r.top;const dx=ex-sx,dy=ey-sy;
+  if(!tearDir){const ad=Math.abs(dx),ay=Math.abs(dy);if(ad>15||ay>15)tearDir=ad>ay?(dx>0?'right':'left'):(dy>0?'down':'up')}
+  if(!tearDir)return;
+  const dist=tearDir==='right'||tearDir==='left'?Math.abs(dx):Math.abs(dy);const max=tearDir==='right'||tearDir==='left'?W:H;
+  tearProg=Math.min(1,dist/(max*.55));drawTear(ctx,W,H,origData,tearProg,tearDir,jags);
+  if(tearProg>=.95){dragging=false;revealed=true;canvas._revealed=true;finishOverlayTear(ctx,W,H,origData,tearProg,tearDir,jags,prize,onComplete)}}
+  function onEnd(){dragging=false;if(!revealed&&tearProg>0&&tearProg<.95){tearProg=0;tearDir=null;ctx.putImageData(origData,0,0)}}
+  // Remove old listeners
+  const newCanvas=canvas.cloneNode(true);canvas.parentNode.replaceChild(newCanvas,canvas);
+  newCanvas.addEventListener('mousedown',onStart);newCanvas.addEventListener('mousemove',onMove);newCanvas.addEventListener('mouseup',onEnd);newCanvas.addEventListener('mouseleave',onEnd);
+  newCanvas.addEventListener('touchstart',onStart,{passive:false});newCanvas.addEventListener('touchmove',onMove,{passive:false});newCanvas.addEventListener('touchend',onEnd);
+  newCanvas._onComplete=onComplete;newCanvas._prize=prize;newCanvas._revealed=false;
+}
+
+function finishOverlayTear(ctx,W,H,origData,prog,dir,jags,prize,onComplete){
+  $('tov-hint').textContent='🎊 開獎中...';
+  function step(){prog+=0.05;if(prog>=1){ctx.clearRect(0,0,W,H);
+    $('tov-hint').style.display='none';$('tov-skip-btn').style.display='none';
+    const big=['A賞','B賞'].includes(prize.level);if(big)startConfetti();
+    setTimeout(()=>{stopConfetti();$('m-tear-ov').classList.remove('show');
+      showResult(prize,S.user);if(onComplete)onComplete()},2000);return}
+  drawTear(ctx,W,H,origData,prog,dir,jags);requestAnimationFrame(step)}
+  requestAnimationFrame(step)}
+
+function skipCurrentReveal(){
+  const canvas=$('tov-canvas');
+  const ov=$('m-tear-ov');ov.classList.remove('show');
+  const prize=canvas._prize;const onComplete=canvas._onComplete;
+  if(prize)showResult(prize,S.user);
+  if(onComplete)setTimeout(onComplete,300);
+}
+
+function skipAllReveals(){
+  $('m-tear-ov').classList.remove('show');
+  // Show all remaining results at once
+  const remaining=S.multiQueue.slice(S.revealIdx).filter(r=>r.success);
+  if(remaining.length){showMultiResult(remaining.map(r=>r.prize),S.user)}
+  clearPendingDraws();
+  if(S.curAct)loadGame(S.curAct.sheetName,'kuji');
+}
+
+function startMultiRevealQueue(results,sh){
+  S.multiQueue=results;S.revealIdx=0;
+  savePendingDraws(sh,'kuji',results);
+  nextInQueue(sh);
+}
+
+function nextInQueue(sh){
+  if(S.revealIdx>=S.multiQueue.length){
+    clearPendingDraws();
+    if(sh||S.curAct)loadGame(sh||S.curAct.sheetName,'kuji');return}
+  const r=S.multiQueue[S.revealIdx];
+  if(!r.success){markRevealed(S.revealIdx);S.revealIdx++;nextInQueue(sh);return}
+  openTearOverlay(r.prize, r.prize.number, ()=>{
+    markRevealed(S.revealIdx);S.revealIdx++;
+    nextInQueue(sh);
+  }, {current:S.revealIdx+1, total:S.multiQueue.length});
+}
+
+function checkPendingDraws(){
+  const d=loadPendingDraws();if(!d)return;
+  if(S.user&&S.user!==d.user){clearPendingDraws();return}
+  const unrevealed=d.results.filter(r=>!r.revealed);
+  if(!unrevealed.length){clearPendingDraws();return}
+  // Show banner
+  const banner=document.createElement('div');banner.className='pending-banner';banner.id='pending-banner';
+  banner.innerHTML=`<i class="fas fa-gift" style="color:var(--gold);font-size:1.3rem"></i><div><div style="color:var(--gold);font-weight:700">您有 ${unrevealed.length} 張未開獎！</div><div style="color:var(--txt3);font-size:.8rem">點擊繼續開獎或查看結果</div></div><div style="display:flex;gap:8px"><button class="btn btn-gold btn-sm" onclick="resumePendingDraws()">繼續開獎</button><button class="btn btn-outline btn-sm" onclick="showPendingResults()">直接看結果</button></div>`;
+  document.body.appendChild(banner);
+}
+
+function resumePendingDraws(){
+  document.getElementById('pending-banner')?.remove();
+  const d=loadPendingDraws();if(!d)return;
+  S.multiQueue=d.results;S.revealIdx=d.results.findIndex(r=>!r.revealed);
+  if(S.revealIdx<0){clearPendingDraws();return}
+  nextInQueue(d.sheetName);
+}
+
+function showPendingResults(){
+  document.getElementById('pending-banner')?.remove();
+  const d=loadPendingDraws();if(!d){return}
+  const prizes=d.results.filter(r=>r.success&&!r.revealed).map(r=>r.prize);
+  if(prizes.length)showMultiResult(prizes,d.user);
+  clearPendingDraws();
+}
+
 function instantReveal(idx,sh){if(!S.user){toast('請先登入','error');return}
-const ticket=document.querySelector(`.ticket[data-idx="${idx}"]`);if(!ticket || !ticket.classList.contains('bought'))return;
-const cover=ticket.querySelector('.ticket-cover');if(cover){cover.style.transition='opacity .4s';cover.style.opacity='0';setTimeout(()=>{cover.style.display='none';ticket.classList.remove('bought');ticket.classList.add('drawn');if(ticket._prize){showResult(ticket._prize,S.user);loadGame(sh,'kuji')}},400)}}
+  doSingleDraw(idx,sh);
+}
 
 async function doSingleDraw(idx,sh){const player=S.user;if(!player){toast('請先登入','error');return}
 const item=S.curItems[idx];const tnum=item['編號']??item['號碼']??Object.values(item)[0];
 showLoading();try{
 const r=await api('drawPrize',{sheetName:sh,playerName:player,ticketNumbers:JSON.stringify([tnum])});hideLoading();
 if(r.results&&Array.isArray(r.results)&&r.results.length>0){const res=r.results[0];if(res.success){
-const t=document.querySelector(`.ticket[data-idx="${idx}"]`);
-if(t){t.classList.add('bought');t._prize=res.prize;const hint=t.querySelector('.tear-hint');if(hint){hint.innerHTML='👆 請滑動撕開！';hint.style.color='#ffd700';hint.style.fontWeight='bold';hint.style.opacity='1';}toast('購買成功！請滑動撕開獎券','success');}
+  savePendingDraws(sh,'kuji',[res]);
+  openTearOverlay(res.prize, tnum, ()=>{clearPendingDraws();loadGame(sh,'kuji')});
 }else{toast(res.error||'已被抽走','error');loadGame(sh,'kuji')}}
 else if(r.error){toast(r.error,'error');loadGame(sh,'kuji')}
 else{toast('回應格式異常','error');loadGame(sh,'kuji')}}catch(e){hideLoading();toast('連線失敗: '+e.message,'error');loadGame(sh,'kuji')}}
@@ -637,10 +804,11 @@ else{toast('回應格式異常','error');loadGame(sh,'kuji')}}catch(e){hideLoadi
 async function doMultiDraw(indices,sh,player){showLoading();try{
 const ticketNums=indices.map(i=>{const it=S.curItems[i];return it['編號']??it['號碼']??Object.values(it)[0]});
 const r=await api('drawPrize',{sheetName:sh,playerName:player,ticketNumbers:JSON.stringify(ticketNums)});hideLoading();
-if(r.results){const ok=r.results.filter(x=>x.success);const fail=r.results.filter(x=>!x.success);
+if(r.results){const fail=r.results.filter(x=>!x.success);
 if(fail.length)fail.forEach(f=>toast(f.error,'error'));
-if(ok.length){showMultiResult(ok.map(x=>x.prize),player)}
-loadGame(sh,'kuji')}else{toast(r.error||'失敗','error')}}catch(e){hideLoading();toast('連線失敗','error')}}
+const ok=r.results.filter(x=>x.success);
+if(ok.length){startMultiRevealQueue(r.results,sh)}
+else{loadGame(sh,'kuji')}}else{toast(r.error||'失敗','error')}}catch(e){hideLoading();toast('連線失敗','error')}}
 
 function clearSelection(){S.selected=[];document.querySelectorAll('.ticket').forEach(t=>t.classList.remove('selected'));updDrawBar()}
 
@@ -730,7 +898,7 @@ function startConfetti(){const cv=$('confetti');cv.width=innerWidth;cv.height=in
 function d(){ctx.clearRect(0,0,cv.width,cv.height);cP.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.rv;if(p.y>cv.height+20){p.y=-20;p.x=Math.random()*cv.width}ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore()});cA=requestAnimationFrame(d)}d()}
 function stopConfetti(){if(cA)cancelAnimationFrame(cA);cA=null;const cv=$('confetti');if(cv)cv.getContext('2d').clearRect(0,0,innerWidth,innerHeight)}
 
-document.addEventListener('DOMContentLoaded',()=>{ if(!location.hash) location.hash='#/home'; R.init() });
+document.addEventListener('DOMContentLoaded',()=>{ if(!location.hash) location.hash='#/home'; R.init(); setTimeout(checkPendingDraws, 1000); });
 
 
 </script>
