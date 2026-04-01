@@ -28,6 +28,7 @@ function handleRequest(e, method) {
       case 'drawPrize':         result = drawPrize(params.sheetName, params.playerName, params.ticketNumbers || params.ticketIndices); break;
       case 'scratchNumber':     result = scratchNumber(params.sheetName, params.numberList || params.number, params.playerName); break;
       case 'getDrawLog':        result = getDrawLog(params.sheetName); break;
+      case 'getMyHistory':      result = getMyHistory(params.username); break;
       case 'resetActivity':     result = resetActivity(params.sheetName); break;
       case 'deleteActivity':    result = deleteActivity(params.sheetName); break;
       default: result = { success: false, error: '未知操作' };
@@ -203,7 +204,14 @@ function getActivityDetail(sheetName) {
     stats[lv].total++;
     if ((isKuji && item['狀態']==='已抽') || (!isKuji && item['狀態']==='已刮')) stats[lv].drawn++; else stats[lv].remaining++;
   });
-  return { success: true, items, activityInfo, stats: Object.values(stats) };
+  // 按獎項等級排序 A→B→C→D→E→F→G→H
+  var PRIZE_ORDER = ['A賞','B賞','C賞','D賞','E賞','F賞','G賞','H賞'];
+  var sortedStats = Object.values(stats).sort(function(a,b) {
+    var ia = PRIZE_ORDER.indexOf(a.level), ib = PRIZE_ORDER.indexOf(b.level);
+    if (ia === -1) ia = 99; if (ib === -1) ib = 99;
+    return ia - ib;
+  });
+  return { success: true, items, activityInfo, stats: sortedStats };
 }
 
 // ── 一番賞抽籤（支援多抽）─────────────────────────────────
@@ -314,6 +322,52 @@ function getDrawLog(sheetName) {
   }
   log.sort(function(a,b){ return String(b.time).localeCompare(String(a.time)); });
   return { success: true, log };
+}
+
+// ── 使用者獲獎紀錄 ──────────────────────────────────────
+
+function getMyHistory(username) {
+  if (!username) return { success: false, error: '請先登入' };
+  const ss = ensureInit();
+  const indexSheet = ss.getSheetByName(INDEX_SHEET);
+  const indexData = indexSheet.getDataRange().getValues();
+  var PRIZE_ORDER = ['A賞','B賞','C賞','D賞','E賞','F賞','G賞','H賞'];
+  const history = [];
+  for (let i = 1; i < indexData.length; i++) {
+    const sheetName = indexData[i][8];
+    const actName = indexData[i][1];
+    const actType = indexData[i][2];
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) continue;
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) continue;
+    const headers = data[0];
+    const sC = headers.indexOf('狀態'), pC = headers.indexOf('抽獎者'), tC = headers.indexOf('抽出時間');
+    const lvC = headers.indexOf('獎項等級'), nC = headers.indexOf('獎品名稱'), imgC = headers.indexOf('圖片網址');
+    for (let j = 1; j < data.length; j++) {
+      if (String(data[j][pC]).trim() === String(username).trim()) {
+        history.push({
+          activityName: actName,
+          activityType: actType,
+          sheetName: sheetName,
+          number: data[j][0],
+          level: data[j][lvC],
+          name: data[j][nC],
+          imageUrl: imgC >= 0 ? (data[j][imgC] || '') : '',
+          time: data[j][tC]
+        });
+      }
+    }
+  }
+  // 按時間倒序，再按獎項等級排序
+  history.sort(function(a, b) {
+    var tc = String(b.time).localeCompare(String(a.time));
+    if (tc !== 0) return tc;
+    var ia = PRIZE_ORDER.indexOf(a.level), ib = PRIZE_ORDER.indexOf(b.level);
+    if (ia === -1) ia = 99; if (ib === -1) ib = 99;
+    return ia - ib;
+  });
+  return { success: true, history: history };
 }
 
 // ── 統計更新 ──────────────────────────────────────────────
