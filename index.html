@@ -1526,6 +1526,40 @@
       }
     }
 
+    /* === TOP PROGRESS BAR (non-blocking) === */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      z-index: 999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s
+    }
+
+    .top-bar.show {
+      opacity: 1
+    }
+
+    .top-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, transparent, var(--gold), var(--accent), var(--gold), transparent);
+      animation: barSlide 1.2s ease-in-out infinite
+    }
+
+    @keyframes barSlide {
+      0% { left: -30%; width: 30% }
+      50% { width: 40% }
+      100% { left: 100%; width: 30% }
+    }
+
     .toasts {
       position: fixed;
       top: 72px;
@@ -2067,6 +2101,7 @@
           class="fas fa-sign-out-alt"></i> 登出</button>
     </div>
   </header>
+  <div class="top-bar" id="topbar"></div>
   <div class="toasts" id="toasts"></div>
   <div class="ld-ov" id="loading">
     <div class="spinner"></div>
@@ -2389,6 +2424,8 @@
     function $(id) { return document.getElementById(id) }
     function showLoading() { $('loading').classList.add('show') }
     function hideLoading() { $('loading').classList.remove('show') }
+    function showBar() { $('topbar').classList.add('show') }
+    function hideBar() { $('topbar').classList.remove('show'); $('loading').classList.remove('show') }
     function showModal(id) { $(id).classList.add('show') }
     function closeModal(id) { $(id).classList.remove('show') }
     function toast(m, t = 'info') { const e = document.createElement('div'); e.className = 'toast ' + t; e.textContent = m; $('toasts').appendChild(e); setTimeout(() => { e.style.opacity = '0'; e.style.transition = 'opacity .3s'; setTimeout(() => e.remove(), 300) }, 3500) }
@@ -2409,19 +2446,19 @@
 
     // ═══ AUTH ═══
     function authTab(t) { $('auth-login').style.display = t === 'login' ? '' : 'none'; $('auth-reg').style.display = t === 'reg' ? '' : 'none'; $('tab-login').className = 'btn ' + (t === 'login' ? 'btn-gold' : 'btn-outline') + ' btn-sm'; $('tab-reg').className = 'btn ' + (t === 'reg' ? 'btn-gold' : 'btn-outline') + ' btn-sm' }
-    async function doLogin() { const u = $('a-user').value.trim(), p = $('a-pass').value.trim(); if (!u || !p) { toast('請填寫', 'error'); return } showLoading(); try { const r = await api('login', { username: u, password: p }); hideLoading(); if (r.success) { S.user = r.username; closeModal('m-auth'); updUIAuth(); toast('登入成功！', 'success'); if (S.pendingGame) { const p = S.pendingGame; S.pendingGame = null; enterGame(p.type, p.sheet); } else { checkPendingDraws(); R.go('my') } } else toast(r.error, 'error') } catch (e) { hideLoading(); toast('連線失敗: ' + e.message, 'error') } }
-    async function doRegister() { const u = $('r-user').value.trim(), p = $('r-pass').value.trim(); if (!u || !p) { toast('請填寫', 'error'); return } if (p.length < 4) { toast('密碼至少4字元', 'error'); return } showLoading(); try { const r = await api('register', { username: u, password: p }); hideLoading(); if (r.success) { toast('🎉 註冊成功，正在自動登入...', 'success'); /* === 自動登入 === */ showLoading(); try { const lr = await api('login', { username: u, password: p }); hideLoading(); if (lr.success) { S.user = lr.username; closeModal('m-auth'); updUIAuth(); toast('歡迎 ' + S.user + '！', 'success'); if (S.pendingGame) { const pg = S.pendingGame; S.pendingGame = null; enterGame(pg.type, pg.sheet); } else { R.go('my') } } else { toast('自動登入失敗，請手動登入', 'error'); authTab('login'); $('a-user').value = u; } } catch(le) { hideLoading(); toast('自動登入失敗，請手動登入', 'error'); authTab('login'); $('a-user').value = u; } } else toast(r.error, 'error') } catch (e) { hideLoading(); toast('連線失敗', 'error') } }
+    async function doLogin() { const u = $('a-user').value.trim(), p = $('a-pass').value.trim(); if (!u || !p) { toast('請填寫', 'error'); return } showBar(); try { const r = await api('login', { username: u, password: p }); hideBar(); if (r.success) { S.user = r.username; closeModal('m-auth'); updUIAuth(); toast('登入成功！', 'success'); if (S.pendingGame) { const p = S.pendingGame; S.pendingGame = null; enterGame(p.type, p.sheet); } else { checkPendingDraws(); R.go('my') } } else toast(r.error, 'error') } catch (e) { hideBar(); toast('連線失敗: ' + e.message, 'error') } }
+    async function doRegister() { const u = $('r-user').value.trim(), p = $('r-pass').value.trim(); if (!u || !p) { toast('請填寫', 'error'); return } if (p.length < 4) { toast('密碼至少4字元', 'error'); return } showBar(); try { const r = await api('register', { username: u, password: p }); hideBar(); if (r.success) { S.user = u.trim(); closeModal('m-auth'); updUIAuth(); toast('🎉 註冊成功，歡迎 ' + S.user + '！', 'success'); if (S.pendingGame) { const pg = S.pendingGame; S.pendingGame = null; enterGame(pg.type, pg.sheet); } else { R.go('my') } } else toast(r.error, 'error') } catch (e) { hideBar(); toast('連線失敗', 'error') } }
     function logout() { S.user = null; updUIAuth(); toast('已登出', 'info'); R.go('home') }
     function updUIAuth() { if (S.user) { $('btn-login').style.display = 'none'; $('btn-logout').style.display = ''; $('btn-history').style.display = ''; $('user-info').style.display = ''; const initial = S.user.charAt(0).toUpperCase(); $('user-info').innerHTML = `<button class="user-home-btn" onclick="R.go('my')"><div class="user-avatar">${initial}</div><div><span class="user-home-name">${S.user}</span><span class="home-indicator">👑 我的首頁</span></div></button>`; } else { $('btn-login').style.display = ''; $('btn-logout').style.display = 'none'; $('btn-history').style.display = 'none'; $('user-info').style.display = 'none' } }
 
     // ═══ ACTIVITY LIST ═══
     let _actsCache = null, _actsCacheTime = 0;
     async function loadActs(mine) {
-      // Use cached data if available and fresh (<30s)
-      if (_actsCache && Date.now() - _actsCacheTime < 30000) { S.acts = _actsCache; renderActs(mine); return }
+      // Use cached data if available and fresh (<60s)
+      if (_actsCache && Date.now() - _actsCacheTime < 60000) { S.acts = _actsCache; renderActs(mine); return }
       if (_actsCache) { S.acts = _actsCache; renderActs(mine) } // show stale immediately
-      else showLoading();
-      try { const r = await api('getActivities'); if (r.success) { S.acts = r.activities || []; _actsCache = S.acts; _actsCacheTime = Date.now(); renderActs(mine) } else toast(r.error, 'error') } catch (e) { if (!_actsCache) toast('載入失敗', 'error') } hideLoading()
+      else showBar();
+      try { const r = await api('getActivities'); if (r.success) { S.acts = r.activities || []; _actsCache = S.acts; _actsCacheTime = Date.now(); renderActs(mine) } else toast(r.error, 'error') } catch (e) { if (!_actsCache) toast('載入失敗', 'error') } hideBar()
     }
     function renderActs(mine) {
       const acts = mine ? S.acts.filter(a => a.creator === S.user) : S.acts; const el = mine ? $('my-act-list') : $('act-list');
@@ -2446,12 +2483,12 @@ ${mine ? `<div class="admin-controls"><button class="btn btn-outline btn-sm" onc
     let _detailCache = {}, _detailCacheTime = {};
     async function loadDetail(sh) {
       // Stale-while-revalidate: show cache immediately, refresh in background
-      if (_detailCache[sh] && Date.now() - (_detailCacheTime[sh] || 0) < 15000) { renderDetail(sh, _detailCache[sh]); return }
-      if (_detailCache[sh]) { renderDetail(sh, _detailCache[sh]) } else showLoading();
+      if (_detailCache[sh] && Date.now() - (_detailCacheTime[sh] || 0) < 30000) { renderDetail(sh, _detailCache[sh]); return }
+      if (_detailCache[sh]) { renderDetail(sh, _detailCache[sh]) } else showBar();
       try {
-        const r = await api('getActivityDetail', { sheetName: sh }); hideLoading(); if (!r.success) { toast(r.error, 'error'); return }
+        const r = await api('getActivityDetail', { sheetName: sh }); hideBar(); if (!r.success) { toast(r.error, 'error'); return }
         _detailCache[sh] = r; _detailCacheTime[sh] = Date.now(); renderDetail(sh, r)
-      } catch (e) { hideLoading(); if (!_detailCache[sh]) toast('載入失敗', 'error') }
+      } catch (e) { hideBar(); if (!_detailCache[sh]) toast('載入失敗', 'error') }
     }
     function renderDetail(sh, r) {
       const a = r.activityInfo, stats = sortStats(r.stats), t = +a.total || 0, d = +a.drawn || 0, pct = t ? Math.round(d / t * 100) : 0, rem = t - d;
@@ -2483,7 +2520,7 @@ ${s.imageUrl ? `<img src="${s.imageUrl}" class="dp-img" onerror="this.style.disp
       $('act-pwd-input').value = ''; showModal('m-actpwd');
       $('act-pwd-btn').onclick = async () => {
         const pw = $('act-pwd-input').value.trim(); if (!pw) { toast('請輸入密碼', 'error'); return }
-        showLoading(); try { const r = await api('verifyActivity', { sheetName: sheet, password: pw }); hideLoading(); if (r.success) { closeModal('m-actpwd'); R.go(type, sheet) } else toast(r.error, 'error') } catch (e) { hideLoading(); toast('連線失敗', 'error') }
+        showBar(); try { const r = await api('verifyActivity', { sheetName: sheet, password: pw }); hideBar(); if (r.success) { closeModal('m-actpwd'); R.go(type, sheet) } else toast(r.error, 'error') } catch (e) { hideBar(); toast('連線失敗', 'error') }
       }
     }
 
@@ -2548,10 +2585,10 @@ ${s.imageUrl ? `<img src="${s.imageUrl}" class="dp-img" onerror="this.style.disp
         api('getActivityDetail', { sheetName: sh }).then(r2 => { if (r2.success) { _detailCache[sh] = r2; _detailCacheTime[sh] = Date.now(); S.curAct = r2.activityInfo; S.curItems = r2.items; S.curStats = sortStats(r2.stats); if (type === 'kuji') rKuji(sh); else rScratch(sh) } }).catch(() => { });
         return;
       }
-      showLoading(); try {
-        const r = await api('getActivityDetail', { sheetName: sh }); if (!r.success) { hideLoading(); toast(r.error, 'error'); return }
+      showBar(); try {
+        const r = await api('getActivityDetail', { sheetName: sh }); if (!r.success) { hideBar(); toast(r.error, 'error'); return }
         _detailCache[sh] = r; _detailCacheTime[sh] = Date.now(); S.curAct = r.activityInfo; S.curItems = r.items; S.curStats = sortStats(r.stats); S.multiN = +S.curAct.multiCount || 5; if (type === 'kuji') rKuji(sh); else rScratch(sh); if (S.user && S.user === S.curAct.creator) loadLog(sh, type)
-      } catch (e) { toast('載入失敗', 'error') } hideLoading()
+      } catch (e) { toast('載入失敗', 'error') } hideBar()
     }
     async function loadLog(sh, type) { try { const r = await api('getDrawLog', { sheetName: sh }); if (r.success) { const id = type === 'kuji' ? 'kj-log' : 'sc-log', sec = type === 'kuji' ? 'kj-log-sec' : 'sc-log-sec'; $(sec).style.display = ''; $(id).innerHTML = `<h3 style="color:var(--gold);font-size:.9rem;margin-bottom:8px"><i class="fas fa-history"></i> 紀錄</h3>` + (r.log.length ? r.log.map(l => `<div class="log-item"><span class="ll" style="color:${pColor(l.level)}">${l.level}</span><span>${l.name}</span><span style="color:var(--txt2)"><i class="fas fa-user"></i> ${l.player}</span><span class="lt">${l.time}</span></div>`).join('') : '<p style="color:var(--txt3);font-size:.8rem">無</p>') } } catch (e) { } }
     function rPanel(stats, id) { const sorted = sortStats(stats); $(id).innerHTML = `<h3><i class="fas fa-trophy"></i> 獎項統計</h3>` + sorted.map(s => `<div class="pi ${s.remaining === 0 ? 'dep' : ''}"><div class="pi-dot" style="background:${pColor(s.level)}"></div><div class="pi-info"><div class="lv">${s.level}</div><div class="nm">${s.name}</div></div><div class="pi-ct"><div class="rem" style="color:${s.remaining ? pColor(s.level) : 'var(--txt3)'}">${s.remaining}</div><div style="color:var(--txt3);font-size:.65rem">/${s.total}</div></div></div>`).join('') }
@@ -2559,11 +2596,11 @@ ${s.imageUrl ? `<img src="${s.imageUrl}" class="dp-img" onerror="this.style.disp
     // ═══ HISTORY ═══
     async function loadHistory() {
       if (!S.user) { toast('請先登入', 'error'); return }
-      showLoading(); try {
-        const r = await api('getMyHistory', { username: S.user }); hideLoading();
+      showBar(); try {
+        const r = await api('getMyHistory', { username: S.user }); hideBar();
         if (r.success) { renderHistory(r.history || []) }
         else toast(r.error || '載入失敗', 'error')
-      } catch (e) { hideLoading(); toast('連線失敗', 'error') }
+      } catch (e) { hideBar(); toast('連線失敗', 'error') }
     }
     function renderHistory(list) {
       if (!list.length) { $('history-content').innerHTML = '<div class="hist-empty"><i class="fas fa-inbox"></i><p>還沒有獲獎紀錄</p><p style="font-size:.8rem;margin-top:6px">去參加活動抽獎吧！</p></div>'; return }
